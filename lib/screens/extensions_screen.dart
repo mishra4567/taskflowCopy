@@ -67,6 +67,7 @@ class _ExtensionsScreenState extends State<ExtensionsScreen> {
   bool _loading = true;
   bool _installing = false;
   String? _loadError;
+  String? _uninstallingId;
 
   @override
   void initState() {
@@ -121,6 +122,45 @@ class _ExtensionsScreenState extends State<ExtensionsScreen> {
       showAppSnackBar(context, "Couldn't install that file");
     } finally {
       if (mounted) setState(() => _installing = false);
+    }
+  }
+
+  Future<void> _confirmUninstall(InstalledExtension extension) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Uninstall extension?'),
+        content: Text(
+          'Remove "${extension.manifest.name}"? Any data it stored will be deleted.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Uninstall'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    await _uninstallExtension(extension);
+  }
+
+  Future<void> _uninstallExtension(InstalledExtension extension) async {
+    setState(() => _uninstallingId = extension.storageId);
+    try {
+      await ExtensionManager.instance.uninstall(extension.storageId);
+      await _refresh();
+      if (!mounted) return;
+      showAppSnackBar(context, '${extension.manifest.name} uninstalled');
+    } catch (_) {
+      if (!mounted) return;
+      showAppSnackBar(context, "Couldn't uninstall that extension");
+    } finally {
+      if (mounted) setState(() => _uninstallingId = null);
     }
   }
 
@@ -233,6 +273,8 @@ class _ExtensionCard extends StatelessWidget {
     required this.description,
     required this.installed,
     required this.onAdd,
+    this.onUninstall,
+    this.uninstalling = false,
   });
 
   final IconData icon;
@@ -240,6 +282,8 @@ class _ExtensionCard extends StatelessWidget {
   final String description;
   final bool installed;
   final VoidCallback? onAdd;
+  final VoidCallback? onUninstall;
+  final bool uninstalling;
 
   @override
   Widget build(BuildContext context) {
@@ -263,22 +307,49 @@ class _ExtensionCard extends StatelessWidget {
                   child: Icon(icon, color: colors.primary, size: 20),
                 ),
                 if (installed)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: colors.tertiary.withValues(alpha: 0.16),
-                      borderRadius: BorderRadius.circular(AppRadius.full),
-                    ),
-                    child: Text(
-                      'INSTALLED',
-                      style: AppTypography.labelCaps.copyWith(
-                        color: colors.tertiary,
-                        fontSize: 10,
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: colors.tertiary.withValues(alpha: 0.16),
+                          borderRadius: BorderRadius.circular(AppRadius.full),
+                        ),
+                        child: Text(
+                          'INSTALLED',
+                          style: AppTypography.labelCaps.copyWith(
+                            color: colors.tertiary,
+                            fontSize: 10,
+                          ),
+                        ),
                       ),
-                    ),
+                      const SizedBox(width: 4),
+                      SizedBox(
+                        width: 32,
+                        height: 32,
+                        child: uninstalling
+                            ? Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: colors.error,
+                                ),
+                              )
+                            : IconButton(
+                                padding: EdgeInsets.zero,
+                                tooltip: 'Uninstall',
+                                onPressed: onUninstall,
+                                icon: Icon(
+                                  Icons.delete_outline,
+                                  size: 18,
+                                  color: colors.error,
+                                ),
+                              ),
+                      ),
+                    ],
                   ),
               ],
             ),
