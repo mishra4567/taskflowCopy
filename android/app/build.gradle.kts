@@ -1,0 +1,53 @@
+plugins {
+    id("com.android.application")
+    id("kotlin-android")
+    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
+    id("dev.flutter.flutter-gradle-plugin")
+}
+
+android {
+    namespace = "com.example.taskflow"
+    compileSdk = flutter.compileSdkVersion
+    ndkVersion = flutter.ndkVersion
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = JavaVersion.VERSION_17.toString()
+    }
+
+    defaultConfig {
+        applicationId = "com.example.taskflow"
+        minSdk = flutter.minSdkVersion
+        targetSdk = flutter.targetSdkVersion
+        versionCode = flutter.versionCode
+        versionName = flutter.versionName
+    }
+
+    buildTypes {
+        release {
+            signingConfig = signingConfigs.getByName("debug")
+        }
+    }
+}
+
+flutter {
+    source = "../.."
+}
+
+// flutter_eval constructs IconData at runtime, which Flutter's icon tree-shaker rejects.
+gradle.taskGraph.whenReady {
+    allTasks.filter { it.name.startsWith("compileFlutterBuild") }.forEach { task ->
+        val setter =
+            generateSequence(task.javaClass as Class<*>?) { it.superclass }
+                .flatMap { it.declaredMethods.asSequence() }
+                .firstOrNull { it.name == "setTreeShakeIcons" }
+        setter?.apply {
+            isAccessible = true
+            invoke(task, false)
+        }
+    }
+}

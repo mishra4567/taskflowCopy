@@ -1,0 +1,57 @@
+"""""""
+/C:/Users/user/AppData/Local/Pub/Cache/hosted/pub.dev/flutter_eval-0.8.2/lib/src/widgets/container.dart:14:7: Error: The non-abstract class '$Container' is missing implementations for these members:
+ - Container.isAntiAlias
+Try to either
+ - provide an implementation,
+ - inherit an implementation from a superclass or mixin,
+ - mark the class as abstract, or
+ - provide a 'noSuchMethod' implementation.
+class $Container implements Container, $Instance {
+      ^^^^^^^^^^
+/C:/flutter/packages/flutter/lib/src/widgets/container.dart:332:14: Context: 'Container.isAntiAlias' is defined here.
+  final bool isAntiAlias;
+             ^^^^^^^^^^^
+Target kernel_snapshot_program failed: Exception
+
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:compileFlutterBuildDebug'.
+> Process 'command 'C:\flutter\bin\flutter.bat'' finished with non-zero exit value 1
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to generate a Build Scan (Powered by Develocity).
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 15m 12s
+Running Gradle task 'assembleDebug'...                            912.8s
+Error: Gradle task assembleDebug failed with exit code 1
+""""""" => 
+
+Good news — I found the exact bug. I cloned flutter_eval's own source from GitHub and confirmed it: Flutter's Container widget now has an isAntiAlias property that this package's shim class simply never implements — even in the latest source on GitHub, not just your installed 0.8.2. It's a genuine gap in the library, not something wrong with your code.
+
+Here's the shim class ($Container in flutter_eval) — it wraps the real Flutter Container and forwards each property to it one by one, e.g.:
+
+@override
+Clip get clipBehavior => $value.clipBehavior;
+
+It's just missing the equivalent line for isAntiAlias.
+
+The fix — add one missing getter. Open this file on your PC:
+
+C:\Users\user\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_eval-0.8.2\lib\src\widgets\container.dart
+
+Find the clipBehavior getter (around line 132) and add this right after it:
+
+dart
+@override
+bool get isAntiAlias => $value.isAntiAlias;
+
+Then re-run:
+
+flutter run
+
+One caveat: this edits a shared package cache, so the fix could get wiped if you ever run flutter pub cache repair or reinstall packages. If you want it to survive that (and be reproducible if you share this project), let me know and I'll walk you through "vendoring" the package — copying it into your project folder and pointing pubspec.yaml's dependency_overrides at your patched local copy instead. That's the durable version of the same fix.
