@@ -8,48 +8,13 @@ import '../theme/app_tokens.dart';
 import '../theme/app_typography.dart';
 import '../widgets/app_snackbar.dart';
 
-class _CatalogEntry {
-  const _CatalogEntry({
-    required this.id,
-    required this.icon,
-    required this.title,
-    required this.description,
-  });
-  final String id;
-  final IconData icon;
-  final String title;
-  final String description;
-}
-
-/// Extensions not yet installable via a real zip — shown as "coming soon"
-/// placeholders alongside the real, working Contacts install flow.
-const _catalog = [
-  _CatalogEntry(
-    id: 'contacts',
-    icon: Icons.people_outline,
-    title: 'Contacts',
-    description:
-        'Bring your contacts into TaskFlow so tasks can be assigned to people.',
-  ),
-  _CatalogEntry(
-    id: 'weather',
-    icon: Icons.wb_sunny_outlined,
-    title: 'Weather Widget',
-    description:
-        'Plan your outdoor tasks with real-time, localized weather forecasts.',
-  ),
-  _CatalogEntry(
-    id: 'finance',
-    icon: Icons.account_balance_wallet_outlined,
-    title: 'Finance Tracker',
-    description: 'Track budgets and link financial goals to your task roadmap.',
-  ),
-];
-
-/// Extensions page — installable modules like Contacts, Roadmap, Alarm, etc.
-/// Tapping "Add Extension" opens the system file picker so the user can
-/// select a .zip they downloaded (e.g. into their Downloads folder); the
-/// zip's own manifest.json determines which extension actually installs.
+/// Extensions page — installable modules. Tapping "Add Extension" opens
+/// the system file picker so the user can select a .zip they downloaded
+/// (e.g. into their Downloads folder); the zip's own manifest.json
+/// determines which extension actually installs. There is no built-in
+/// catalog of "known" extensions — anything with a valid manifest can
+/// be installed, so the list here only ever reflects what's actually on
+/// the device.
 class ExtensionsScreen extends StatefulWidget {
   const ExtensionsScreen({super.key, this.standalone = false});
 
@@ -87,7 +52,7 @@ class _ExtensionsScreenState extends State<ExtensionsScreen> {
     } catch (e) {
       // Don't leave the page stuck on a spinner if the extensions folder
       // can't be read for some reason — fall back to "nothing installed"
-      // so the catalog still renders and Add Extension still works.
+      // so Add Extension still works and the empty state renders instead.
       if (!mounted) return;
       setState(() {
         _installed = [];
@@ -167,7 +132,6 @@ class _ExtensionsScreenState extends State<ExtensionsScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final installedIds = _installed.map((e) => e.manifest.id).toSet();
 
     final body = _loading
         ? const Center(child: CircularProgressIndicator())
@@ -226,7 +190,7 @@ class _ExtensionsScreenState extends State<ExtensionsScreen> {
                 Padding(
                   padding: const EdgeInsets.only(bottom: AppSpacing.md),
                   child: Text(
-                    "Couldn't read installed extensions — showing catalog only.",
+                    "Couldn't read installed extensions.",
                     style: AppTypography.bodySm.copyWith(color: colors.error),
                   ),
                 ),
@@ -236,23 +200,42 @@ class _ExtensionsScreenState extends State<ExtensionsScreen> {
                   icon: installed.manifest.iconData,
                   title: installed.manifest.name,
                   description: installed.manifest.description,
-                  installed: true,
-                  onAdd: null,
+                  onUninstall: _uninstallingId == installed.storageId
+                      ? null
+                      : () => _confirmUninstall(installed),
+                  uninstalling: _uninstallingId == installed.storageId,
                 ),
                 const SizedBox(height: AppSpacing.md),
               ],
 
-              for (final entry in _catalog)
-                if (!installedIds.contains(entry.id)) ...[
-                  _ExtensionCard(
-                    icon: entry.icon,
-                    title: entry.title,
-                    description: entry.description,
-                    installed: false,
-                    onAdd: _installing ? null : _addExtension,
+              if (_installed.isEmpty && _loadError == null)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
+                  child: Column(
+                    children: [
+                      Icon(
+                        Icons.extension_outlined,
+                        size: 40,
+                        color: colors.textSecondary,
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      Text(
+                        'No extensions installed yet',
+                        style: AppTypography.bodyLg.copyWith(
+                          color: colors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'Download an extension .zip, then tap + above to install it.',
+                        textAlign: TextAlign.center,
+                        style: AppTypography.bodySm.copyWith(
+                          color: colors.textSecondary,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: AppSpacing.md),
-                ],
+                ),
             ],
           );
 
@@ -271,8 +254,6 @@ class _ExtensionCard extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.description,
-    required this.installed,
-    required this.onAdd,
     this.onUninstall,
     this.uninstalling = false,
   });
@@ -280,8 +261,6 @@ class _ExtensionCard extends StatelessWidget {
   final IconData icon;
   final String title;
   final String description;
-  final bool installed;
-  final VoidCallback? onAdd;
   final VoidCallback? onUninstall;
   final bool uninstalling;
 
@@ -306,51 +285,50 @@ class _ExtensionCard extends StatelessWidget {
                   ),
                   child: Icon(icon, color: colors.primary, size: 20),
                 ),
-                if (installed)
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: colors.tertiary.withValues(alpha: 0.16),
-                          borderRadius: BorderRadius.circular(AppRadius.full),
-                        ),
-                        child: Text(
-                          'INSTALLED',
-                          style: AppTypography.labelCaps.copyWith(
-                            color: colors.tertiary,
-                            fontSize: 10,
-                          ),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: colors.tertiary.withValues(alpha: 0.16),
+                        borderRadius: BorderRadius.circular(AppRadius.full),
+                      ),
+                      child: Text(
+                        'INSTALLED',
+                        style: AppTypography.labelCaps.copyWith(
+                          color: colors.tertiary,
+                          fontSize: 10,
                         ),
                       ),
-                      const SizedBox(width: 4),
-                      SizedBox(
-                        width: 32,
-                        height: 32,
-                        child: uninstalling
-                            ? Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: colors.error,
-                                ),
-                              )
-                            : IconButton(
-                                padding: EdgeInsets.zero,
-                                tooltip: 'Uninstall',
-                                onPressed: onUninstall,
-                                icon: Icon(
-                                  Icons.delete_outline,
-                                  size: 18,
-                                  color: colors.error,
-                                ),
+                    ),
+                    const SizedBox(width: 4),
+                    SizedBox(
+                      width: 32,
+                      height: 32,
+                      child: uninstalling
+                          ? Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: colors.error,
                               ),
-                      ),
-                    ],
-                  ),
+                            )
+                          : IconButton(
+                              padding: EdgeInsets.zero,
+                              tooltip: 'Uninstall',
+                              onPressed: onUninstall,
+                              icon: Icon(
+                                Icons.delete_outline,
+                                size: 18,
+                                color: colors.error,
+                              ),
+                            ),
+                    ),
+                  ],
+                ),
               ],
             ),
             const SizedBox(height: AppSpacing.md),
@@ -366,15 +344,6 @@ class _ExtensionCard extends StatelessWidget {
               description,
               style: AppTypography.bodySm.copyWith(color: colors.textSecondary),
             ),
-            const SizedBox(height: AppSpacing.md),
-            if (!installed)
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: onAdd,
-                  child: const Text('Add Extension'),
-                ),
-              ),
           ],
         ),
       ),

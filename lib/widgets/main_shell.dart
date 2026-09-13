@@ -93,6 +93,14 @@ class _MainShellState extends State<MainShell> {
       appBar: _page == _NavPage.search
           ? null
           : AppBar(
+              // main_shell.dart — back arrow now shown on Calendar (and Extensions)
+              leading:
+                  (_page == _NavPage.extensions || _page == _NavPage.calendar)
+                  ? IconButton(
+                      icon: const Icon(Icons.arrow_back),
+                      onPressed: () => _selectPage(_previousPage),
+                    )
+                  : null,
               title: Text(_titles[_page]!),
               actions: [
                 IconButton(

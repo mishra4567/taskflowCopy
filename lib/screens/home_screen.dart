@@ -1,17 +1,18 @@
 // screens/home_screen
 import 'package:flutter/material.dart';
 import 'package:taskflow/extensions/extension_manager.dart';
+import 'package:taskflow/extensions/extension_manifest.dart';
 import 'package:taskflow/screens/todo_screen.dart';
 // import 'package:taskflow/screens/roadmap_screen.dart';
-import 'package:taskflow/screens/contacts_screen.dart';
-// import 'package:taskflow/screens/timeline_screen.dart';
+import 'package:taskflow/screens/extension_runner_screen.dart';
 import 'package:taskflow/widgets/slide_page_route.dart';
 import '../theme/app_palette.dart';
 import '../theme/app_tokens.dart';
 import '../theme/app_typography.dart';
 
-/// Home page — the entry list of built-in + extension-provided modules
-/// (TODO list, TODO Roadmap, Contacts, …).
+/// Home page — the entry list of built-in modules (TODO list, Calendar,
+/// TODO Roadmap) plus a card per installed extension, driven entirely by
+/// that extension's own manifest — no per-extension special casing here.
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key, required this.onOpenCalendar});
 
@@ -25,7 +26,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   bool _loading = true;
-  Set<String> _installedIds = {};
+  List<InstalledExtension> _installed = [];
 
   @override
   void initState() {
@@ -38,7 +39,7 @@ class _HomeScreenState extends State<HomeScreen> {
       final installed = await ExtensionManager.instance.loadInstalled();
       if (!mounted) return;
       setState(() {
-        _installedIds = installed.map((e) => e.manifest.id).toSet();
+        _installed = installed;
         _loading = false;
       });
     } catch (_) {
@@ -46,7 +47,7 @@ class _HomeScreenState extends State<HomeScreen> {
       // toward "nothing installed" rather than leaving Home stuck loading.
       if (!mounted) return;
       setState(() {
-        _installedIds = {};
+        _installed = [];
         _loading = false;
       });
     }
@@ -63,7 +64,6 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final contactsInstalled = _installedIds.contains('contacts');
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(
@@ -104,29 +104,37 @@ class _HomeScreenState extends State<HomeScreen> {
 
           /// onTap: () => _navigateAndRefresh(const RoadmapScreen()),
         ),
-        const SizedBox(height: AppSpacing.md),
-        _ModuleCard(
-          icon: Icons.view_timeline_outlined,
-          iconColor: colors.tertiary,
-          title: 'TIME Stamp',
-          subtitle: 'Add Your · Timeline',
-          trailing: const _CountBadge(count: 3),
 
-          /// onTap: () => _navigateAndRefresh(const TimelineScreen()),
-        ),
-
-        // Only shown once the Contacts extension is actually installed —
-        // no dead-end card pointing at a feature that won't work yet.
-        if (!_loading && contactsInstalled) ...[
-          const SizedBox(height: AppSpacing.md),
-          _ModuleCard(
-            icon: Icons.people_outline,
-            iconColor: colors.secondary,
-            title: 'Contacts',
-            subtitle: '12 people',
-            onTap: () => _navigateAndRefresh(const ContactsScreen()),
-          ),
-        ],
+        // One card per installed extension, driven entirely by that
+        // extension's own manifest (icon, name, description) — nothing
+        // here is specific to any particular extension's id or type.
+        if (_loading)
+          const Padding(
+            padding: EdgeInsets.only(top: AppSpacing.md),
+            child: Center(
+              child: SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            ),
+          )
+        else
+          for (final ext in _installed) ...[
+            const SizedBox(height: AppSpacing.md),
+            _ModuleCard(
+              icon: ext.manifest.iconData,
+              iconColor: colors.tertiary,
+              title: ext.manifest.name,
+              subtitle: ext.manifest.description,
+              onTap: () => _navigateAndRefresh(
+                ExtensionRunnerScreen(
+                  extensionType: ext.manifest.type,
+                  title: ext.manifest.name,
+                ),
+              ),
+            ),
+          ],
       ],
     );
   }

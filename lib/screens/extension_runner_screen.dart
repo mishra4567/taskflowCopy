@@ -9,19 +9,19 @@ import '../widgets/slide_page_route.dart';
 import 'extensions_screen.dart';
 
 /// Generic screen for any code-based extension — looks up an installed
-/// extension by id, and either runs its Dart source via CodeExtensionView,
+/// extension by type, and either runs its Dart source via CodeExtensionView,
 /// falls back to reading plain JSON via [onData] if it's data-only, or
 /// shows a "not installed" state. Not specific to Contacts; reusable for
 /// any future extension that follows the same manifest shape.
 class ExtensionRunnerScreen extends StatefulWidget {
   const ExtensionRunnerScreen({
     super.key,
-    required this.extensionId,
+    required this.extensionType,
     required this.title,
     this.onData,
   });
 
-  final String extensionId;
+  final String extensionType;
   final String title;
 
   /// Optional builder for extensions that ship plain JSON instead of
@@ -47,7 +47,9 @@ class _ExtensionRunnerScreenState extends State<ExtensionRunnerScreen> {
 
   Future<void> _load() async {
     final installed = await ExtensionManager.instance.loadInstalled();
-    final match = installed.where((e) => e.manifest.id == widget.extensionId);
+    final match = installed.where(
+      (e) => e.manifest.type == widget.extensionType,
+    );
     if (match.isEmpty) {
       if (mounted) {
         setState(() {

@@ -33,7 +33,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
       '[Contacts] found ${installed.length} installed: ${installed.map((e) => e.manifest.id).toList()}',
     );
 
-    final match = installed.where((e) => e.manifest.id == 'contacts');
+    final match = installed.where((e) => e.manifest.type == 'contacts');
     if (match.isEmpty) {
       debugPrint('[Contacts] no contacts extension found');
       if (mounted) {
