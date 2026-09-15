@@ -2,6 +2,8 @@
 import 'package:flutter/material.dart';
 import 'package:taskflow/extensions/extension_manager.dart';
 import 'package:taskflow/extensions/extension_manifest.dart';
+import 'package:taskflow/services/dev_mode_service.dart';
+import 'package:taskflow/screens/testing/testing_extension_screen.dart';
 import 'package:taskflow/screens/todo_screen.dart';
 // import 'package:taskflow/screens/roadmap_screen.dart';
 import 'package:taskflow/screens/extension_runner_screen.dart';
@@ -89,6 +91,30 @@ class _HomeScreenState extends State<HomeScreen> {
           subtitle: 'Two-way sync with Google Calendar',
           onTap: widget.onOpenCalendar,
         ),
+
+        /// testing a extension runner screen with a hardcoded extension
+        /// testing extension card
+        ValueListenableBuilder<bool>(
+          valueListenable: DevModeService.instance.enabled,
+          builder: (context, devMode, _) {
+            if (!devMode) return const SizedBox.shrink();
+            return Column(
+              children: [
+                const SizedBox(height: AppSpacing.md),
+                _ModuleCard(
+                  icon: Icons.chat_bubble_outline,
+                  iconColor: colors.tertiary,
+                  title: 'Texting Extension',
+                  subtitle: 'Draft, testing build',
+                  onTap: () =>
+                      _navigateAndRefresh(const TestingExtensionScreen()),
+                ),
+              ],
+            );
+          },
+        ),
+
+        /// testing extension card end
         const SizedBox(height: AppSpacing.xl),
         Text(
           'EXTENSIONS',

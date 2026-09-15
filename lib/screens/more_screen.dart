@@ -1,9 +1,12 @@
+// screens/more_screen.dart
 import 'package:flutter/material.dart';
+import 'package:taskflow/widgets/slide_page_route.dart';
 import '../theme/app_palette.dart';
 import '../theme/app_tokens.dart';
 import '../theme/app_typography.dart';
 import '../theme/theme_controller.dart';
 import '../widgets/theme_picker_dialog.dart';
+import './settings_screen.dart';
 
 /// More page — Archive, Trash, Settings, Theme, Account.
 class MoreScreen extends StatelessWidget {
@@ -57,9 +60,12 @@ class MoreScreen extends StatelessWidget {
           builder: (context, mode, _) {
             return _SectionCard(
               rows: [
-                const _RowSpec(
+                _RowSpec(
                   icon: Icons.settings_outlined,
                   label: 'Settings',
+                  onTap: () => Navigator.of(
+                    context,
+                  ).push(slidePageRoute((_) => const SettingsScreen())),
                 ),
                 _RowSpec(
                   icon: Icons.system_update,

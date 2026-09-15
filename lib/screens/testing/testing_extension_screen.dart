@@ -1,0 +1,22 @@
+import 'package:flutter/material.dart';
+import '../../theme/app_palette.dart';
+
+/// Placeholder screen for the Texting extension, for debugging/testing
+/// the card + navigation before this becomes a real installed extension.
+class TestingExtensionScreen extends StatelessWidget {
+  const TestingExtensionScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    return Scaffold(
+      appBar: AppBar(title: const Text('Testing Extension')),
+      body: Center(
+        child: Text(
+          'Testing extension — coming soon',
+          style: TextStyle(color: colors.textSecondary),
+        ),
+      ),
+    );
+  }
+}

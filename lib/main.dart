@@ -3,8 +3,12 @@ import 'package:flutter/material.dart';
 import 'theme/app_theme.dart';
 import 'theme/theme_controller.dart';
 import 'widgets/main_shell.dart';
+import 'services/dev_mode_service.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await DevModeService.instance.load();
+  // whatever your root widget is called
   runApp(const TaskFlowApp());
 }
 
