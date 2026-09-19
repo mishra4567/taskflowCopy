@@ -1,58 +1,23 @@
 // calender_screen
 import 'package:flutter/material.dart';
+import '../data/app_database.dart';
+import '../models/todo_task.dart';
+import '../services/todo_refresh_bus.dart';
 import '../theme/app_palette.dart';
 import '../theme/app_tokens.dart';
 import '../theme/app_typography.dart';
 
-class _AgendaItem {
-  const _AgendaItem({
-    required this.title,
-    required this.subtitle,
-    required this.icon,
-    required this.color,
-  });
-  final String title;
-  final String subtitle;
-  final IconData icon;
-  final Color Function(AppPalette) color;
-}
+DateTime _dateOnly(DateTime d) => DateTime(d.year, d.month, d.day);
 
-/// Sample due dates keyed by day-of-month, relative to the current month.
-/// Swap for real task/roadmap due-date queries once the data layer exists.
-Map<int, List<_AgendaItem>> _sampleEvents(DateTime month, DateTime today) {
-  if (month.year != today.year || month.month != today.month) return {};
-  return {
-    today.day: [
-      _AgendaItem(
-        title: 'Finalize Q3 Strategy Deck',
-        subtitle: 'Task due today',
-        icon: Icons.check_circle_outline,
-        color: (c) => c.primary,
-      ),
-    ],
-    today.day + 2: [
-      _AgendaItem(
-        title: 'Product V2 milestone',
-        subtitle: 'Roadmap · 45% complete',
-        icon: Icons.map_outlined,
-        color: (c) => c.tertiary,
-      ),
-    ],
-    today.day - 3: [
-      _AgendaItem(
-        title: 'Review Design System tokens',
-        subtitle: 'Completed',
-        icon: Icons.check_circle,
-        color: (c) => c.tertiary,
-      ),
-    ],
-  };
-}
-
-/// Calendar tab — monthly grid with due-date markers, plus an agenda list
-/// for whichever day is selected.
+/// Calendar tab — monthly grid with due-date markers pulled from real
+/// tasks, plus an agenda list for whichever day is selected. Tapping a
+/// day both shows its tasks here and offers a "View in TODO" jump that
+/// switches to the TODO tab pre-filtered to that date.
 class CalendarScreen extends StatefulWidget {
-  const CalendarScreen({super.key});
+  const CalendarScreen({super.key, required this.onViewDateInTodo});
+
+  /// Switches MainShell to the TODO tab, filtered to the given date.
+  final ValueChanged<DateTime> onViewDateInTodo;
 
   @override
   State<CalendarScreen> createState() => _CalendarScreenState();
@@ -63,11 +28,40 @@ class _CalendarScreenState extends State<CalendarScreen> {
   late DateTime _selectedDate;
   final DateTime _today = DateTime.now();
 
+  bool _loading = true;
+  Map<DateTime, List<TodoTask>> _eventsByDate = {};
+
   @override
   void initState() {
     super.initState();
     _visibleMonth = DateTime(_today.year, _today.month);
     _selectedDate = DateTime(_today.year, _today.month, _today.day);
+    _loadEvents();
+    // Adding/editing a task anywhere (TODO tab, quick-add) should move
+    // its marker here without needing to leave and re-enter this tab.
+    TodoRefreshBus.tick.addListener(_loadEvents);
+  }
+
+  @override
+  void dispose() {
+    TodoRefreshBus.tick.removeListener(_loadEvents);
+    super.dispose();
+  }
+
+  Future<void> _loadEvents() async {
+    final bundles = await AppDatabase.instance.getAllTodosWithSubtasks();
+    final tasks = bundles.map(TodoTask.fromBundle).toList();
+    final grouped = <DateTime, List<TodoTask>>{};
+    for (final task in tasks) {
+      final due = task.dueDate;
+      if (due == null) continue;
+      grouped.putIfAbsent(_dateOnly(due), () => []).add(task);
+    }
+    if (!mounted) return;
+    setState(() {
+      _eventsByDate = grouped;
+      _loading = false;
+    });
   }
 
   void _changeMonth(int delta) {
@@ -98,7 +92,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final events = _sampleEvents(_visibleMonth, _today);
+
+    if (_loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     final firstOfMonth = DateTime(_visibleMonth.year, _visibleMonth.month, 1);
     final daysInMonth = DateTime(
       _visibleMonth.year,
@@ -109,11 +107,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
     final totalCells = leadingBlanks + daysInMonth;
     final rowCount = (totalCells / 7).ceil();
 
-    final selectedEvents =
-        _visibleMonth.year == _selectedDate.year &&
-            _visibleMonth.month == _selectedDate.month
-        ? (events[_selectedDate.day] ?? const <_AgendaItem>[])
-        : const <_AgendaItem>[];
+    final selectedEvents = _eventsByDate[_dateOnly(_selectedDate)] ?? const [];
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(
@@ -182,7 +176,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
                       row * 7 + col,
                       leadingBlanks,
                       daysInMonth,
-                      events,
                     ),
                   ),
                 ],
@@ -190,13 +183,25 @@ class _CalendarScreenState extends State<CalendarScreen> {
             ),
           ),
         const SizedBox(height: AppSpacing.lg),
-        Text(
-          _selectedDate.year == _today.year &&
-                  _selectedDate.month == _today.month &&
-                  _selectedDate.day == _today.day
-              ? 'TODAY'
-              : '${_monthNames[_selectedDate.month - 1].toUpperCase()} ${_selectedDate.day}',
-          style: AppTypography.labelCaps.copyWith(color: colors.textSecondary),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              _selectedDate.year == _today.year &&
+                      _selectedDate.month == _today.month &&
+                      _selectedDate.day == _today.day
+                  ? 'TODAY'
+                  : '${_monthNames[_selectedDate.month - 1].toUpperCase()} ${_selectedDate.day}',
+              style: AppTypography.labelCaps.copyWith(
+                color: colors.textSecondary,
+              ),
+            ),
+            if (selectedEvents.isNotEmpty)
+              TextButton(
+                onPressed: () => widget.onViewDateInTodo(_selectedDate),
+                child: const Text('View in TODO'),
+              ),
+          ],
         ),
         const SizedBox(height: AppSpacing.sm),
         if (selectedEvents.isEmpty)
@@ -212,8 +217,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
             ),
           )
         else
-          for (final event in selectedEvents) ...[
-            _AgendaCard(item: event),
+          for (final task in selectedEvents) ...[
+            _AgendaCard(task: task),
             const SizedBox(height: AppSpacing.sm),
           ],
       ],
@@ -225,7 +230,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
     int cellIndex,
     int leadingBlanks,
     int daysInMonth,
-    Map<int, List<_AgendaItem>> events,
   ) {
     final colors = context.colors;
     final dayNumber = cellIndex - leadingBlanks + 1;
@@ -242,7 +246,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
         date.year == _selectedDate.year &&
         date.month == _selectedDate.month &&
         date.day == _selectedDate.day;
-    final hasEvent = events.containsKey(dayNumber);
+    final hasEvent = _eventsByDate.containsKey(_dateOnly(date));
 
     return GestureDetector(
       onTap: () => setState(() => _selectedDate = date),
@@ -294,12 +298,17 @@ class _CalendarScreenState extends State<CalendarScreen> {
 }
 
 class _AgendaCard extends StatelessWidget {
-  const _AgendaCard({required this.item});
-  final _AgendaItem item;
+  const _AgendaCard({required this.task});
+  final TodoTask task;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final due = task.dueDate;
+    final timeLabel = due != null && (due.hour != 0 || due.minute != 0)
+        ? TimeOfDay.fromDateTime(due).format(context)
+        : null;
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.md),
@@ -312,7 +321,13 @@ class _AgendaCard extends StatelessWidget {
                 color: colors.surfaceContainerHigh,
                 borderRadius: BorderRadius.circular(AppRadius.standard),
               ),
-              child: Icon(item.icon, size: 20, color: item.color(colors)),
+              child: Icon(
+                task.isDone ? Icons.check_circle : Icons.radio_button_unchecked,
+                size: 20,
+                color: task.isDone
+                    ? colors.tertiary
+                    : task.priority.color(colors),
+              ),
             ),
             const SizedBox(width: AppSpacing.md),
             Expanded(
@@ -320,15 +335,20 @@ class _AgendaCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    item.title,
+                    task.title,
                     style: AppTypography.bodyMd.copyWith(
                       color: colors.textPrimary,
                       fontWeight: FontWeight.w600,
+                      decoration: task.isDone
+                          ? TextDecoration.lineThrough
+                          : null,
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    item.subtitle,
+                    timeLabel == null
+                        ? task.category
+                        : '${task.category} · $timeLabel',
                     style: AppTypography.bodySm.copyWith(
                       color: colors.textSecondary,
                     ),

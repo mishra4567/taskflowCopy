@@ -1,0 +1,212 @@
+TASKFLOW — CHANGES SUMMARY
+Repo: https://github.com/mishra4567/taskflowCopy
+==================================================================
+
+1. TEXTING EXTENSION (placeholder card, dev-mode gated)
+------------------------------------------------------
+- lib/screens/texting_extension_screen.dart (NEW)
+    Placeholder screen shown when the card is tapped. Will be replaced
+    by a real installed extension (manifest + ExtensionRunnerScreen)
+    later — no other file needs to change when that happens, since
+    Home's `for (final ext in _installed)` loop already renders any
+    extension driven purely by its manifest.
+- lib/screens/home_screen.dart (MODIFIED)
+    Added a "Texting Extension" card, wrapped in a
+    ValueListenableBuilder listening to DevModeService.instance.enabled
+    so it only shows when Developer mode is on. Also added onOpenTodo
+    (see section 3).
+
+2. DEVELOPER MODE (persisted toggle)
+-------------------------------------
+- lib/services/dev_mode_service.dart (NEW)
+    Singleton wrapping a ValueNotifier<bool>, persisted via
+    shared_preferences (key: dev_mode_enabled). Call
+    DevModeService.instance.load() once at startup, before runApp.
+- lib/screens/settings_screen.dart (NEW)
+    New Settings page with a single "Developer mode" switch.
+- lib/screens/more_screen.dart (MODIFIED)
+    The existing "Settings" row's onTap now pushes SettingsScreen via
+    slidePageRoute. (Note: that _RowSpec entry can no longer be const,
+    since its onTap closure captures `context`.)
+
+REQUIRED DEPENDENCY (not yet in pubspec.yaml):
+    shared_preferences: ^2.2.0
+REQUIRED main.dart CHANGE:
+    void main() async {
+      WidgetsFlutterBinding.ensureInitialized();
+      await DevModeService.instance.load();
+      runApp(const MyApp());
+    }
+
+3. TODO SCREEN MOVED INTO THE SHELL (bottom nav now visible on it)
+-------------------------------------------------------------------
+- lib/screens/todo_screen.dart (MODIFIED)
+    TodoScreen now takes `required VoidCallback onBack` (replaces the
+    back arrow's Navigator.pop, since it's no longer a pushed route)
+    and `DateTime? initialDateFilter` (see section 6).
+- lib/widgets/main_shell.dart (MODIFIED)
+    Added `_NavPage.todo` to the enum. TODO renders inside the shell
+    (via _buildPage), so the bottom nav + FAB stay visible on it. The
+    shell hides its own AppBar for this page (TodoScreen supplies its
+    own), same pattern as SearchScreen. Bottom-bar's first icon
+    (format_list_bulleted) highlights for both `home` and `todo` so it
+    doesn't look "unselected" while on TODO.
+- lib/screens/home_screen.dart (MODIFIED)
+    HomeScreen now requires `onOpenTodo` — the TODO List card calls it
+    instead of pushing TodoScreen directly.
+
+4. QUICK ADD SHEET — separated, restyled, connected to real save
+--------------------------------------------------------------------
+- lib/widgets/quick_add_sheet.dart (NEW / rewritten from inline code)
+    Extracted out of main_shell.dart. Restyled to match
+    todo_task_sheet.dart (drag handle, surfaceContainerHighest bg,
+    rounded top, border). Two actions, each its own Card (matching
+    HomeScreen's _ModuleCard "boxy" look):
+      - "Create TODO" → pops itself, opens the real showTodoTaskSheet,
+        and persists straight to AppDatabase (_persistNewTodo) — no
+        state passed through MainShell.
+      - "Add Roadmap Item" → still a placeholder callback (Roadmap has
+        no real screen/table yet).
+    Notifies TodoRefreshBus after saving (see section 6).
+- lib/widgets/quick_add_fab.dart (NEW)
+    The center FAB extracted out of main_shell.dart into its own
+    widget, class renamed _QuickAddFab -> QuickAddFab (public).
+- lib/widgets/main_shell.dart (MODIFIED)
+    _onQuickAdd simplified — onCreateTodo removed (handled inside
+    quick_add_sheet.dart now), only onAddRoadmapItem remains.
+    floatingActionButton now uses QuickAddFab(...) from its own file.
+
+STILL OPEN: extension-contributed quick-add actions (e.g. Texting
+Extension adding its own row to this sheet) — waiting on
+extension_manifest.dart / extension_manager.dart to wire up correctly.
+
+5. TASK DUE TIME (not just date)
+-----------------------------------
+- lib/widgets/todo_task_sheet.dart (MODIFIED)
+    Added `TimeOfDay? _dueTime` alongside `_dueDate`. New "Set time"
+    OutlinedButton next to "Set due date". `_combinedDueDate` getter
+    merges both into the one DateTime that TodoTask.dueDate already
+    stores (no model/table change needed — see section 8). Clearing
+    the date now also clears the time.
+- lib/screens/todo_screen.dart (MODIFIED)
+    _TaskCard._timeLabel() shows the time next to the date whenever
+    it's non-midnight (i.e. a time was actually set).
+
+6. LIVE REFRESH BETWEEN QUICK-ADD AND THE TODO SCREEN
+--------------------------------------------------------
+- lib/services/todo_refresh_bus.dart (NEW)
+    TodoRefreshBus.tick — a ValueNotifier<int> "something changed,
+    please reload" signal. TodoRefreshBus.notify() bumps it.
+- lib/widgets/quick_add_sheet.dart (MODIFIED)
+    Calls TodoRefreshBus.notify() right after persisting a new task.
+- lib/screens/todo_screen.dart (MODIFIED)
+    Listens to TodoRefreshBus.tick in initState (calls _loadTasks),
+    removes the listener in a new dispose() override. Fixes: adding a
+    task via the FAB while already sitting on the TODO tab now shows
+    up immediately instead of requiring a tab switch.
+- lib/screens/calendar_screen.dart (MODIFIED, see section 7)
+    Also listens to the same bus, so calendar markers update live too.
+
+7. CALENDAR <-> TODO CONNECTION (real data, two-way)
+---------------------------------------------------------
+- lib/screens/calendar_screen.dart (REWRITTEN)
+    Removed the old hardcoded _sampleEvents fake data. Now loads real
+    tasks via AppDatabase.instance.getAllTodosWithSubtasks() +
+    TodoTask.fromBundle (same call TodoScreen uses), groups them by
+    due-date-only into _eventsByDate, and uses that both for:
+      - the small dot marker on each day cell that has tasks due
+      - the agenda list under the selected day (now real TodoTasks,
+        rendered via a new _AgendaCard, not the old _AgendaItem)
+    Constructor now requires `ValueChanged<DateTime> onViewDateInTodo`.
+    When the selected day has tasks, a "View in TODO" TextButton
+    appears that calls this callback.
+- lib/screens/todo_screen.dart (MODIFIED)
+    Added `DateTime? initialDateFilter` constructor param, `_dateFilter`
+    state, `_isSameDate` helper. Filtering now combines priority AND
+    date. A new _DateFilterBanner widget shows "Showing tasks due
+    D/M/Y" with a dismiss (X) button above the priority chips whenever
+    a date filter is active.
+- lib/widgets/main_shell.dart (MODIFIED)
+    Added `_todoDateFilter` field and a single `_openTodo({DateTime?
+    dateFilter})` helper. Home's TODO card calls `_openTodo()` (no
+    filter); Calendar's "View in TODO" calls `_openTodo(dateFilter:
+    date)`. Keeps the filter from leaking between the two entry paths.
+
+NOTE: Roadmap items have no due-date table yet, so they don't appear
+on the calendar. Would need their own table (like Todos) to support
+markers the same way, if/when Roadmap becomes real.
+
+8. DATABASE — NO SCHEMA CHANGE NEEDED FOR TIME
+---------------------------------------------------
+Todos.dueDate is already a Drift DateTimeColumn, which stores a full
+timestamp (date + time), not date-only. So adding the time picker
+(section 5) required zero migration, no new column, no schemaVersion
+bump — the existing column already had room for it.
+
+9. NOTIFICATION / ALARM PERMISSIONS
+----------------------------------------
+- lib/services/permission_service.dart (NEW; originally named
+  task_permissions_service.dart, renamed to be a general home for any
+  future permission, not just task-related ones)
+    class PermissionService:
+      - requestNotificationPermission() -> bool
+            Permission.notification.request().isGranted
+            (POST_NOTIFICATIONS on Android 13+, standard prompt on iOS;
+            no-op/true on older Android with no runtime permission)
+      - requestExactAlarmPermission() -> bool
+            Permission.scheduleExactAlarm.request().isGranted on
+            Android 12+; always true on iOS/other platforms (no
+            equivalent concept there)
+      - isPermanentlyDenied(Permission) -> bool
+      - openSettings() -> opens system app settings
+- lib/widgets/todo_task_sheet.dart (MODIFIED)
+    Notification and Alarm SwitchListTiles now call
+    _onNotificationToggled / _onAlarmToggled instead of a plain
+    setState. Turning ON requests the relevant permission first;
+    granted -> switch turns on, denied -> SnackBar ("permission
+    declined" or, if permanently denied, "permission is off in
+    Settings" with an "Open Settings" action button). Turning OFF never
+    requests anything.
+
+REQUIRED DEPENDENCY:
+    permission_handler: ^13.0.2   (latest as of this build; confirmed
+                                   on pub.dev — note v12.0.0 bumped
+                                   compileSdkVersion to 35 as a
+                                   BREAKING CHANGE, so check
+                                   android/app/build.gradle has
+                                   compileSdk = 35 or higher)
+
+ANDROID MANIFEST ADDITIONS NEEDED (android/app/src/main/AndroidManifest.xml,
+inside <manifest>, above <application>) — NOT YET APPLIED, file was
+never shared:
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM"/>
+
+iOS Podfile ADDITION NEEDED (not yet applied, file was never shared) —
+inside the post_install block's GCC_PREPROCESSOR_DEFINITIONS:
+    'PERMISSION_NOTIFICATIONS=1'
+
+IMPORTANT SCOPE NOTE: this only gates the PERMISSION for the two
+switches. No notification or alarm actually fires at task.dueDate yet.
+That would need flutter_local_notifications (notifications) and
+something like android_alarm_manager_plus / native AlarmManager access
+(exact alarms), wired to the due date/time — not built yet.
+
+==================================================================
+FILES STILL NEEDED FROM YOU (not yet seen, blocking follow-up work):
+- extension_manifest.dart / extension_manager.dart — to wire
+  extension-contributed quick-add actions (section 4) and to properly
+  convert Texting Extension from placeholder to a real extension.
+- android/app/src/main/AndroidManifest.xml — to apply permission lines.
+- ios/Podfile — to apply the iOS permission_handler build flag.
+- android/app/build.gradle — to confirm compileSdk >= 35 for
+  permission_handler 12+.
+
+PENDING MANUAL STEPS (pubspec.yaml / main.dart):
+- Add shared_preferences: ^2.2.0
+- Add permission_handler: ^13.0.2
+- Run flutter pub get
+- Update main.dart to await DevModeService.instance.load() before
+  runApp()
+==================================================================

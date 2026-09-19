@@ -1,5 +1,6 @@
 // models/todo_task
 import 'package:flutter/material.dart';
+import 'package:taskflow/data/app_database.dart';
 import '../theme/app_palette.dart';
 
 /// Priority levels a task can be tagged with. Plain enum with a
@@ -68,6 +69,27 @@ class TodoTask {
   bool alarmEnabled;
   final List<Subtask> subtasks;
 
+  /// Maps a database row (todo + its subtasks) to a TodoTask — the one
+  /// place this mapping happens, so TodoScreen and CalendarScreen (and
+  /// anything else that reads todos) share the same logic instead of
+  /// each re-deriving it.
+  factory TodoTask.fromBundle(TodoWithSubtasks bundle) {
+    final row = bundle.todo;
+    return TodoTask(
+      id: row.id,
+      title: row.title,
+      category: row.category,
+      priority: TaskPriority.values.byName(row.priority),
+      dueDate: row.dueDate,
+      isDone: row.isDone,
+      notificationEnabled: row.notificationEnabled,
+      alarmEnabled: row.alarmEnabled,
+      subtasks: bundle.subtasks
+          .map((s) => Subtask(title: s.title, isDone: s.isDone))
+          .toList(),
+    );
+  }
+
   bool get hasSubtasks => subtasks.isNotEmpty;
   int get subtaskDoneCount => subtasks.where((s) => s.isDone).length;
 
@@ -98,47 +120,48 @@ class TodoTask {
     );
   }
 
-  /// Fixed sample data — swap for a real query once storage is wired up.
-  static List<TodoTask> sampleTasks() {
-    final today = DateTime.now();
-    DateTime daysFromNow(int n) =>
-        DateTime(today.year, today.month, today.day + n);
+  // /// Fixed sample data — swap for a real query once storage is wired up.
+  // static List<TodoTask> sampleTasks() {
+  //   final today = DateTime.now();
+  //   DateTime daysFromNow(int n) =>
+  //       DateTime(today.year, today.month, today.day + n);
 
-    return [
-      TodoTask(
-        id: 't1',
-        title: 'Finalize Q3 Strategy Deck',
-        category: 'Work',
-        priority: TaskPriority.high,
-        dueDate: daysFromNow(0),
-        notificationEnabled: true,
-      ),
-      TodoTask(
-        id: 't2',
-        title: 'Review Design System tokens',
-        category: 'Design',
-        priority: TaskPriority.medium,
-        dueDate: daysFromNow(-2),
-        isDone: true,
-      ),
-      TodoTask(
-        id: 't3',
-        title: 'Pay electricity bill',
-        category: 'Personal',
-        priority: TaskPriority.low,
-        dueDate: daysFromNow(3),
-        alarmEnabled: true,
-      ),
-      TodoTask(
-        id: 't4',
-        title: 'Plan roadmap sync with team',
-        category: 'Work',
-        priority: TaskPriority.medium,
-        subtasks: [
-          Subtask(title: 'Draft agenda', isDone: true),
-          Subtask(title: 'Send calendar invite'),
-        ],
-      ),
-    ];
-  }
+  //   return [
+  //     TodoTask(
+  //       id: 't1',
+  //       title: 'Finalize Q3 Strategy Deck',
+  //       category: 'Work',
+  //       priority: TaskPriority.high,
+  //       dueDate: daysFromNow(0),
+  //       notificationEnabled: true,
+  //     ),
+  //     TodoTask(
+  //       id: 't2',
+  //       title: 'Review Design System tokens',
+  //       category: 'Design',
+  //       priority: TaskPriority.medium,
+  //       dueDate: daysFromNow(-2),
+  //       isDone: true,
+  //     ),
+  //     TodoTask(
+  //       id: 't3',
+  //       title: 'Pay electricity bill',
+  //       category: 'Personal',
+  //       priority: TaskPriority.low,
+  //       dueDate: daysFromNow(3),
+  //       alarmEnabled: true,
+  //     ),
+  //     TodoTask(
+  //       id: 't4',
+  //       title: 'Plan roadmap sync with team',
+  //       category: 'Work',
+  //       priority: TaskPriority.medium,
+  //       subtasks: [
+  //         Subtask(title: 'Draft agenda', isDone: true),
+  //         Subtask(title: 'Send calendar invite'),
+  //       ],
+  //     ),
+  //   ];
+  // }
+
 }

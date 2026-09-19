@@ -1,29 +1,98 @@
-// screens/todo_screen
+// todo_screen
 import 'package:flutter/material.dart';
+import 'package:drift/drift.dart' show Value;
+import '../data/app_database.dart';
 import '../models/todo_task.dart';
+import '../services/todo_refresh_bus.dart';
 import '../theme/app_palette.dart';
 import '../theme/app_tokens.dart';
 import '../theme/app_typography.dart';
 import '../widgets/todo_task_sheet.dart';
 
 /// TODO List tab — filterable, grouped agenda of tasks with an inline
-/// add/edit sheet. Data is hardcoded via TodoTask.sampleTasks() until a
-/// storage layer (sqflite/Hive — undecided) is wired up.
+/// add/edit sheet. Backed by AppDatabase (Drift/SQLite): the in-memory
+/// `_tasks` list is the UI's working copy for snappy interaction, and
+/// every mutation writes through to the database immediately.
+///
+/// Rendered inside MainShell rather than pushed over it, so the bottom
+/// nav and FAB stay visible; the AppBar here is this screen's own (the
+/// shell hides its bar for this page).
 class TodoScreen extends StatefulWidget {
-  const TodoScreen({super.key});
+  const TodoScreen({super.key, required this.onBack, this.initialDateFilter});
+
+  /// Because this page lives inside the shell, there's no route to pop —
+  /// "back" asks the shell to switch to the previously active tab.
+  final VoidCallback onBack;
+
+  /// Set when arriving here from Calendar's "View in TODO" — filters the
+  /// list to tasks due on this date. Null for the normal Home → TODO path.
+  final DateTime? initialDateFilter;
 
   @override
   State<TodoScreen> createState() => _TodoScreenState();
 }
 
 class _TodoScreenState extends State<TodoScreen> {
-  late List<TodoTask> _tasks;
+  List<TodoTask> _tasks = [];
+  bool _loading = true;
   TaskPriority? _priorityFilter; // null = All
+  DateTime? _dateFilter;
+
+  bool _isSameDate(DateTime? a, DateTime b) =>
+      a != null && a.year == b.year && a.month == b.month && a.day == b.day;
 
   @override
   void initState() {
     super.initState();
-    _tasks = TodoTask.sampleTasks();
+    _dateFilter = widget.initialDateFilter;
+    _loadTasks();
+    // A task added elsewhere (the quick-add FAB) writes straight to the
+    // database and can't reach this screen's in-memory _tasks list any
+    // other way, so listen for that signal and reload when it fires.
+    TodoRefreshBus.tick.addListener(_loadTasks);
+  }
+
+  @override
+  void dispose() {
+    TodoRefreshBus.tick.removeListener(_loadTasks);
+    super.dispose();
+  }
+
+  Future<void> _loadTasks() async {
+    final bundles = await AppDatabase.instance.getAllTodosWithSubtasks();
+    final loaded = bundles.map(TodoTask.fromBundle).toList();
+    if (!mounted) return;
+    setState(() {
+      _tasks = loaded;
+      _loading = false;
+    });
+  }
+
+  Future<void> _persistTask(TodoTask task) async {
+    await AppDatabase.instance.upsertTodo(
+      TodosCompanion.insert(
+        id: task.id,
+        title: task.title,
+        category: task.category,
+        priority: task.priority.name,
+        dueDate: Value(task.dueDate),
+        isDone: Value(task.isDone),
+        notificationEnabled: Value(task.notificationEnabled),
+        alarmEnabled: Value(task.alarmEnabled),
+      ),
+    );
+    await AppDatabase.instance.replaceSubtasksForTodo(
+      task.id,
+      task.subtasks
+          .map(
+            (s) => SubtasksCompanion.insert(
+              todoId: task.id,
+              title: s.title,
+              isDone: Value(s.isDone),
+            ),
+          )
+          .toList(),
+    );
   }
 
   void _openSheet({TodoTask? existing}) {
@@ -39,27 +108,40 @@ class _TodoScreenState extends State<TodoScreen> {
             _tasks[i] = task;
           }
         });
+        _persistTask(task);
       },
       onDelete: existing == null
           ? null
-          : () =>
-                setState(() => _tasks.removeWhere((t) => t.id == existing.id)),
+          : () {
+              setState(() => _tasks.removeWhere((t) => t.id == existing.id));
+              AppDatabase.instance.deleteTodo(existing.id);
+            },
     );
   }
 
   void _toggleDone(TodoTask task) {
     setState(() => task.isDone = !task.isDone);
+    _persistTask(task);
   }
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+
+    if (_loading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
     final today = DateTime.now();
     final todayDate = DateTime(today.year, today.month, today.day);
 
-    final visible = _priorityFilter == null
-        ? _tasks
-        : _tasks.where((t) => t.priority == _priorityFilter).toList();
+    final visible = _tasks.where((t) {
+      final matchesPriority =
+          _priorityFilter == null || t.priority == _priorityFilter;
+      final matchesDate =
+          _dateFilter == null || _isSameDate(t.dueDate, _dateFilter!);
+      return matchesPriority && matchesDate;
+    }).toList();
 
     final pending = visible.where((t) => !t.isDone).toList();
     final completed = visible.where((t) => t.isDone).toList();
@@ -82,6 +164,10 @@ class _TodoScreenState extends State<TodoScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: widget.onBack,
+        ),
         title: const Text('My Tasks'),
         actions: [
           IconButton(
@@ -101,6 +187,13 @@ class _TodoScreenState extends State<TodoScreen> {
           140,
         ),
         children: [
+          if (_dateFilter != null) ...[
+            _DateFilterBanner(
+              date: _dateFilter!,
+              onClear: () => setState(() => _dateFilter = null),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+          ],
           SizedBox(
             height: 36,
             child: ListView(
@@ -131,7 +224,9 @@ class _TodoScreenState extends State<TodoScreen> {
               child: Padding(
                 padding: const EdgeInsets.all(AppSpacing.md),
                 child: Text(
-                  'No tasks match this filter',
+                  _tasks.isEmpty
+                      ? 'No tasks yet — tap + to add one.'
+                      : 'No tasks match this filter',
                   style: AppTypography.bodySm.copyWith(
                     color: colors.textSecondary,
                   ),
@@ -174,6 +269,45 @@ class _TodoScreenState extends State<TodoScreen> {
               onTap: _openSheet,
               onToggle: _toggleDone,
             ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DateFilterBanner extends StatelessWidget {
+  const _DateFilterBanner({required this.date, required this.onClear});
+
+  final DateTime date;
+  final VoidCallback onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: colors.primaryContainer.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(AppRadius.standard),
+        border: Border.all(color: colors.primaryContainer),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.event, size: 16, color: colors.primaryContainer),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'Showing tasks due ${date.day}/${date.month}/${date.year}',
+              style: AppTypography.bodySm.copyWith(
+                color: colors.textPrimary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          GestureDetector(
+            onTap: onClear,
+            child: Icon(Icons.close, size: 16, color: colors.onSurfaceVariant),
+          ),
         ],
       ),
     );
@@ -284,6 +418,15 @@ class _TaskCard extends StatelessWidget {
     return '${d.day}/${d.month}/${d.year}';
   }
 
+  /// Time isn't its own field on TodoTask — it rides along inside
+  /// dueDate — so a plain date-only due date (saved as midnight) has
+  /// nothing to show here, and this returns null for it.
+  String? _timeLabel(BuildContext context) {
+    final d = task.dueDate!;
+    if (d.hour == 0 && d.minute == 0) return null;
+    return TimeOfDay.fromDateTime(d).format(context);
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
@@ -372,6 +515,15 @@ class _TaskCard extends StatelessWidget {
                                   : FontWeight.w400,
                             ),
                           ),
+                          if (_timeLabel(context) != null)
+                            Text(
+                              _timeLabel(context)!,
+                              style: AppTypography.bodySm.copyWith(
+                                color: isOverdue
+                                    ? colors.error
+                                    : colors.textSecondary,
+                              ),
+                            ),
                         ],
                         if (task.hasSubtasks) ...[
                           Text(

@@ -1,6 +1,8 @@
 // widgets/todo_task_sheet
 import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart' show Permission;
 import '../models/todo_task.dart';
+import '../services/permission_service.dart';
 import '../theme/app_palette.dart';
 import '../theme/app_tokens.dart';
 import '../theme/app_typography.dart';
@@ -38,6 +40,10 @@ class _TodoTaskSheetState extends State<_TodoTaskSheet> {
   late final TextEditingController _categoryController;
   late TaskPriority _priority;
   DateTime? _dueDate;
+  // Time is kept separate from _dueDate while editing (so the two pickers
+  // are independent buttons) and only combined into one DateTime at save
+  // time — TodoTask has no separate time field, dueDate carries both.
+  TimeOfDay? _dueTime;
   late bool _notificationEnabled;
   late bool _alarmEnabled;
   String? _titleError;
@@ -50,6 +56,9 @@ class _TodoTaskSheetState extends State<_TodoTaskSheet> {
     _categoryController = TextEditingController(text: existing?.category ?? '');
     _priority = existing?.priority ?? TaskPriority.medium;
     _dueDate = existing?.dueDate;
+    _dueTime = existing?.dueDate != null
+        ? TimeOfDay.fromDateTime(existing!.dueDate!)
+        : null;
     _notificationEnabled = existing?.notificationEnabled ?? false;
     _alarmEnabled = existing?.alarmEnabled ?? false;
   }
@@ -72,6 +81,36 @@ class _TodoTaskSheetState extends State<_TodoTaskSheet> {
     if (picked != null) setState(() => _dueDate = picked);
   }
 
+  Future<void> _pickTime() async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: _dueTime ?? TimeOfDay.now(),
+    );
+    if (picked != null) {
+      setState(() {
+        // A time with no date attached isn't useful on its own — default
+        // to today so "3:30 PM" always has a day to sit on.
+        _dueDate ??= DateTime.now();
+        _dueTime = picked;
+      });
+    }
+  }
+
+  /// The single DateTime that actually gets saved — date and time picked
+  /// independently, combined here. Falls back to midnight when only a
+  /// date was chosen, matching the previous date-only behavior.
+  DateTime? get _combinedDueDate {
+    if (_dueDate == null) return null;
+    if (_dueTime == null) return _dueDate;
+    return DateTime(
+      _dueDate!.year,
+      _dueDate!.month,
+      _dueDate!.day,
+      _dueTime!.hour,
+      _dueTime!.minute,
+    );
+  }
+
   void _save() {
     final title = _titleController.text.trim();
     if (title.isEmpty) {
@@ -79,6 +118,7 @@ class _TodoTaskSheetState extends State<_TodoTaskSheet> {
       return;
     }
 
+    final dueDate = _combinedDueDate;
     final existing = widget.existing;
     final task = existing == null
         ? TodoTask(
@@ -88,7 +128,7 @@ class _TodoTaskSheetState extends State<_TodoTaskSheet> {
                 ? 'General'
                 : _categoryController.text.trim(),
             priority: _priority,
-            dueDate: _dueDate,
+            dueDate: dueDate,
             notificationEnabled: _notificationEnabled,
             alarmEnabled: _alarmEnabled,
           )
@@ -98,8 +138,8 @@ class _TodoTaskSheetState extends State<_TodoTaskSheet> {
                 ? 'General'
                 : _categoryController.text.trim(),
             priority: _priority,
-            dueDate: _dueDate,
-            clearDueDate: _dueDate == null,
+            dueDate: dueDate,
+            clearDueDate: dueDate == null,
             notificationEnabled: _notificationEnabled,
             alarmEnabled: _alarmEnabled,
           );
@@ -111,6 +151,73 @@ class _TodoTaskSheetState extends State<_TodoTaskSheet> {
   void _delete() {
     widget.onDelete?.call();
     Navigator.of(context).pop();
+  }
+
+  /// Turning the switch on asks for the OS permission first; turning it
+  /// off never needs a permission check. If the person already said
+  /// "don't ask again," `.request()` won't show a prompt at all, so we
+  /// route to system settings instead of silently failing to enable it.
+  Future<void> _onNotificationToggled(bool value) async {
+    if (!value) {
+      setState(() => _notificationEnabled = false);
+      return;
+    }
+    final granted = await PermissionService.requestNotificationPermission();
+    if (!mounted) return;
+    if (granted) {
+      setState(() => _notificationEnabled = true);
+      return;
+    }
+    final permanentlyDenied = await PermissionService.isPermanentlyDenied(
+      Permission.notification,
+    );
+    if (!mounted) return;
+    _showPermissionDeniedSnackBar(
+      permanentlyDenied: permanentlyDenied,
+      label: 'Notifications',
+    );
+  }
+
+  Future<void> _onAlarmToggled(bool value) async {
+    if (!value) {
+      setState(() => _alarmEnabled = false);
+      return;
+    }
+    final granted = await PermissionService.requestExactAlarmPermission();
+    if (!mounted) return;
+    if (granted) {
+      setState(() => _alarmEnabled = true);
+      return;
+    }
+    final permanentlyDenied = await PermissionService.isPermanentlyDenied(
+      Permission.scheduleExactAlarm,
+    );
+    if (!mounted) return;
+    _showPermissionDeniedSnackBar(
+      permanentlyDenied: permanentlyDenied,
+      label: 'Exact alarms',
+    );
+  }
+
+  void _showPermissionDeniedSnackBar({
+    required bool permanentlyDenied,
+    required String label,
+  }) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          permanentlyDenied
+              ? '$label permission is off in Settings.'
+              : '$label permission was declined.',
+        ),
+        action: permanentlyDenied
+            ? SnackBarAction(
+                label: 'Open Settings',
+                onPressed: PermissionService.openSettings,
+              )
+            : null,
+      ),
+    );
   }
 
   @override
@@ -220,6 +327,22 @@ class _TodoTaskSheetState extends State<_TodoTaskSheet> {
                       ),
                     ),
                   ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: _pickTime,
+                      icon: Icon(
+                        Icons.access_time_outlined,
+                        size: 16,
+                        color: colors.onSurface,
+                      ),
+                      label: Text(
+                        _dueTime == null
+                            ? 'Set time'
+                            : _dueTime!.format(context),
+                      ),
+                    ),
+                  ),
                   if (_dueDate != null)
                     IconButton(
                       icon: Icon(
@@ -227,7 +350,10 @@ class _TodoTaskSheetState extends State<_TodoTaskSheet> {
                         size: 18,
                         color: colors.onSurfaceVariant,
                       ),
-                      onPressed: () => setState(() => _dueDate = null),
+                      onPressed: () => setState(() {
+                        _dueDate = null;
+                        _dueTime = null;
+                      }),
                     ),
                 ],
               ),
@@ -242,7 +368,7 @@ class _TodoTaskSheetState extends State<_TodoTaskSheet> {
                   ),
                 ),
                 value: _notificationEnabled,
-                onChanged: (v) => setState(() => _notificationEnabled = v),
+                onChanged: _onNotificationToggled,
                 activeThumbColor: colors.primary,
               ),
               SwitchListTile(
@@ -254,7 +380,7 @@ class _TodoTaskSheetState extends State<_TodoTaskSheet> {
                   ),
                 ),
                 value: _alarmEnabled,
-                onChanged: (v) => setState(() => _alarmEnabled = v),
+                onChanged: _onAlarmToggled,
                 activeThumbColor: colors.primary,
               ),
               const SizedBox(height: AppSpacing.md),

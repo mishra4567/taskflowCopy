@@ -16,11 +16,15 @@ import '../theme/app_typography.dart';
 /// TODO Roadmap) plus a card per installed extension, driven entirely by
 /// that extension's own manifest — no per-extension special casing here.
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key, required this.onOpenCalendar});
+  const HomeScreen({super.key, required this.onOpenCalendar, required this.onOpenTodo});
 
   /// Calendar lives on the bottom nav, so tapping its card here switches
   /// the shell's active tab instead of pushing a new route.
   final VoidCallback onOpenCalendar;
+
+   /// TODO also renders inside the shell now (so the bottom nav stays
+  /// visible on it), so its card switches tabs rather than pushing.
+  final VoidCallback onOpenTodo;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -81,7 +85,8 @@ class _HomeScreenState extends State<HomeScreen> {
           title: 'TODO List',
           subtitle: '3 tasks due this week',
           trailing: const _CountBadge(count: 3),
-          onTap: () => _navigateAndRefresh(const TodoScreen()),
+          // onTap: () => _navigateAndRefresh(const TodoScreen()),
+          onTap: widget.onOpenTodo,
         ),
         const SizedBox(height: AppSpacing.sm),
         _ModuleCard(
