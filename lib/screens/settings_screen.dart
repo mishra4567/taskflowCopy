@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/permissions_card.dart';
 import '../services/dev_mode_service.dart';
 import '../theme/app_palette.dart';
 import '../theme/app_tokens.dart';
@@ -22,6 +23,15 @@ class SettingsScreen extends StatelessWidget {
           140,
         ),
         children: [
+          Text(
+            'PERMISSIONS',
+            style: AppTypography.labelCaps.copyWith(
+              color: colors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          const PermissionsCard(),
+          const SizedBox(height: AppSpacing.lg),
           Text(
             'DEVELOPER',
             style: AppTypography.labelCaps.copyWith(

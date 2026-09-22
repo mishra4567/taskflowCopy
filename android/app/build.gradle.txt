@@ -1,4 +1,5 @@
-plugins {
+  // ---- 22.9.26
+  plugins {
     id("com.android.application")
     id("kotlin-android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
@@ -7,21 +8,12 @@ plugins {
 
 android {
     namespace = "com.example.taskflow"
-    // permission_handler_android requires compiling against SDK 37+.
-    // Overriding flutter.compileSdkVersion (currently 36) directly,
-    // since Android SDKs are backward compatible this is safe even
-    // though minSdk/targetSdk stay wherever Flutter's own config sets
-    // them.
-    compileSdk = 37
+    compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
-         // flutter_local_notifications needs core library desugaring
-        // enabled — it uses java.time APIs under the hood that aren't
-        // natively available below Android 8 (API 26) without this.
-        isCoreLibraryDesugaringEnabled = true
     }
 
     kotlinOptions {
@@ -42,10 +34,6 @@ android {
         }
     }
 }
-dependencies {
-    // The actual desugaring library the flag above requires.
-    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
-}
 
 flutter {
     source = "../.."
@@ -64,3 +52,5 @@ gradle.taskGraph.whenReady {
         }
     }
 }
+ // after this :----------
+ 

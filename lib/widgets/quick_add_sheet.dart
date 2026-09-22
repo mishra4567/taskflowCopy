@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:drift/drift.dart' show Value;
 import '../data/app_database.dart';
 import '../models/todo_task.dart';
+import '../services/notification_service.dart';
 import '../services/todo_refresh_bus.dart';
 import '../theme/app_palette.dart';
 import '../theme/app_tokens.dart';
@@ -42,6 +43,10 @@ Future<void> _persistNewTodo(TodoTask task) async {
   // A brand-new task from quick-add never has subtasks yet, so there's
   // nothing to replace here — unlike TodoScreen._persistTask, which also
   // handles edits to an existing task's subtask list.
+
+  if (task.notificationEnabled && task.dueDate != null) {
+    await NotificationService.instance.scheduleTaskNotification(task);
+  }
 
   // TodoScreen may already be open with this task missing from its
   // in-memory list (it wasn't the one that wrote it) — tell it to reload.

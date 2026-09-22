@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:drift/drift.dart' show Value;
 import '../data/app_database.dart';
 import '../models/todo_task.dart';
+import '../services/notification_service.dart';
 import '../services/todo_refresh_bus.dart';
 import '../theme/app_palette.dart';
 import '../theme/app_tokens.dart';
@@ -93,6 +94,20 @@ class _TodoScreenState extends State<TodoScreen> {
           )
           .toList(),
     );
+    await _syncNotification(task);
+  }
+
+  /// Reschedules the reminder on every save (covers a title/time/priority
+  /// edit replacing an old schedule) and cancels it whenever it no longer
+  /// applies — switch off, due date cleared, or the task marked done.
+  Future<void> _syncNotification(TodoTask task) async {
+    final shouldNotify =
+        task.notificationEnabled && task.dueDate != null && !task.isDone;
+    if (shouldNotify) {
+      await NotificationService.instance.scheduleTaskNotification(task);
+    } else {
+      await NotificationService.instance.cancelTaskNotification(task.id);
+    }
   }
 
   void _openSheet({TodoTask? existing}) {
@@ -115,6 +130,7 @@ class _TodoScreenState extends State<TodoScreen> {
           : () {
               setState(() => _tasks.removeWhere((t) => t.id == existing.id));
               AppDatabase.instance.deleteTodo(existing.id);
+              NotificationService.instance.cancelTaskNotification(existing.id);
             },
     );
   }

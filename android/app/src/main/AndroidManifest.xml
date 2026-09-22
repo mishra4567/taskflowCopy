@@ -1,4 +1,21 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+ <!-- Required (Android 13+/API 33+) to actually show any notification. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <!-- Required (Android 12+/API 31+) to fire a notification at an exact
+         date/time rather than an approximate window. flutter_local_notifications
+         checks canScheduleExactNotifications() at runtime and falls back to
+         inexact scheduling if this isn't granted, so the app still works
+         without it — this just enables "exactly on time" behavior. -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
+    <!-- Stricter alternative to SCHEDULE_EXACT_ALARM that needs no runtime
+         prompt, but Google Play restricts it to apps whose core function
+         is alarms/clocks/calendars and requires declaring that category
+         in Play Console. Fine to keep for local development/testing;
+         remove before a Play Store release unless this app is actually
+         positioned as an alarm app. -->
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM"/>
+    <!-- So a scheduled notification still fires after the device reboots. -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <application
         android:label="taskflow"
         android:name="${applicationName}"

@@ -55,3 +55,7 @@ Then re-run:
 flutter run
 
 One caveat: this edits a shared package cache, so the fix could get wiped if you ever run flutter pub cache repair or reinstall packages. If you want it to survive that (and be reproducible if you share this project), let me know and I'll walk you through "vendoring" the package — copying it into your project folder and pointing pubspec.yaml's dependency_overrides at your patched local copy instead. That's the durable version of the same fix.
+
+// -- app starting bug fix :- 
+      Before it take 1o second to Open home page 
+      Now    it take 2 second.
