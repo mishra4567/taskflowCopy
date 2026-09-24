@@ -4,7 +4,7 @@ import 'package:taskflow/extensions/extension_manager.dart';
 import 'package:taskflow/extensions/extension_manifest.dart';
 import 'package:taskflow/services/dev_mode_service.dart';
 import 'package:taskflow/screens/testing/testing_extension_screen.dart';
-import 'package:taskflow/screens/todo_screen.dart';
+// import 'package:taskflow/screens/todo_screen.dart';
 // import 'package:taskflow/screens/roadmap_screen.dart';
 import 'package:taskflow/screens/extension_runner_screen.dart';
 import 'package:taskflow/widgets/slide_page_route.dart';
@@ -13,16 +13,20 @@ import '../theme/app_tokens.dart';
 import '../theme/app_typography.dart';
 
 /// Home page — the entry list of built-in modules (TODO list, Calendar,
-/// TODO Roadmap) plus a card per installed extension, driven entirely by
+/// 'todo' Roadmap) plus a card per installed extension, driven entirely by
 /// that extension's own manifest — no per-extension special casing here.
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key, required this.onOpenCalendar, required this.onOpenTodo});
+  const HomeScreen({
+    super.key,
+    required this.onOpenCalendar,
+    required this.onOpenTodo,
+  });
 
   /// Calendar lives on the bottom nav, so tapping its card here switches
   /// the shell's active tab instead of pushing a new route.
   final VoidCallback onOpenCalendar;
 
-   /// TODO also renders inside the shell now (so the bottom nav stays
+  /// 'todo' also renders inside the shell now (so the bottom nav stays
   /// visible on it), so its card switches tabs rather than pushing.
   final VoidCallback onOpenTodo;
 
@@ -111,8 +115,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   iconColor: colors.tertiary,
                   title: 'Texting Extension',
                   subtitle: 'Draft, testing build',
-                  onTap: () =>
-                      _navigateAndRefresh(const TestingExtensionScreen()),
+                  onTap: () => _navigateAndRefresh(
+                    TestingExtensionScreen(
+                      onBack: () => Navigator.of(context).pop(),
+                    ),
+                  ),
                 ),
               ],
             );
@@ -162,6 +169,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ExtensionRunnerScreen(
                   extensionType: ext.manifest.type,
                   title: ext.manifest.name,
+                  onBack: () => Navigator.of(context).pop(),
                 ),
               ),
             ),

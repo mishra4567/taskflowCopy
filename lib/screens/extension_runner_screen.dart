@@ -13,16 +13,23 @@ import 'extensions_screen.dart';
 /// falls back to reading plain JSON via [onData] if it's data-only, or
 /// shows a "not installed" state. Not specific to Contacts; reusable for
 /// any future extension that follows the same manifest shape.
+///
+/// Lives inside MainShell (like TodoScreen/ContactsExtensionScreen)
+/// rather than being pushed over it, so the bottom nav stays visible —
+/// hence `onBack` instead of Navigator.pop, and its own leading arrow
+/// since the shell hides its AppBar for this page.
 class ExtensionRunnerScreen extends StatefulWidget {
   const ExtensionRunnerScreen({
     super.key,
     required this.extensionType,
     required this.title,
+    required this.onBack,
     this.onData,
   });
 
   final String extensionType;
   final String title;
+  final VoidCallback onBack;
 
   /// Optional builder for extensions that ship plain JSON instead of
   /// code — called with the decoded data if the installed extension has
@@ -85,7 +92,13 @@ class _ExtensionRunnerScreenState extends State<ExtensionRunnerScreen> {
   Widget build(BuildContext context) {
     final colors = context.colors;
     return Scaffold(
-      appBar: AppBar(title: Text(widget.title)),
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: widget.onBack,
+        ),
+        title: Text(widget.title),
+      ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : !_installed

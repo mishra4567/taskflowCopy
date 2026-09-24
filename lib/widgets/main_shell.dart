@@ -14,7 +14,7 @@ import 'app_snackbar.dart';
 import 'slide_page_route.dart';
 
 /// Bottom nav destinations. `extensions` and `todo` aren't bottom-nav icons
-/// (Calendar took one slot, and TODO is opened from the Home card) but they
+/// (Calendar took one slot, and 'todo' is opened from the Home card) but they
 /// live in this enum so they render *inside* the shell — that's what keeps
 /// the bottom bar and FAB visible on those pages instead of being covered
 /// by a pushed route. The center FAB is a quick-add action, not a page, so
@@ -32,8 +32,8 @@ class _MainShellState extends State<MainShell> {
   _NavPage _page = _NavPage.home;
   _NavPage _previousPage = _NavPage.home;
 
-  /// Set right before switching to the TODO tab from Calendar's
-  /// "View in TODO" action; cleared whenever TODO is opened any other
+  /// Set right before switching to the 'todo' tab from Calendar's
+  /// "View in 'todo'" action; cleared whenever todo is opened any other
   /// way, so a stale date filter never carries over.
   DateTime? _todoDateFilter;
 
@@ -54,8 +54,8 @@ class _MainShellState extends State<MainShell> {
     });
   }
 
-  /// Opens the TODO tab, optionally pre-filtered to a date (from
-  /// Calendar) — explicitly passing null elsewhere (Home's TODO card)
+  /// Opens the 'todo' tab, optionally pre-filtered to a date (from
+  /// Calendar) — explicitly passing null elsewhere (Home's 'todo' card)
   /// is what keeps a previous date filter from leaking back in.
   void _openTodo({DateTime? dateFilter}) {
     setState(() {
@@ -87,7 +87,7 @@ class _MainShellState extends State<MainShell> {
 
   void _onQuickAdd() => showQuickAddSheet(
     context,
-    // "Create TODO" now opens the real task sheet and saves straight to
+    // "Create 'todo'" now opens the real task sheet and saves straight to
     // AppDatabase from inside quick_add_sheet.dart, so there's nothing
     // left for MainShell to wire up for it.
     onAddRoadmapItem: () => showAppSnackBar(context, 'Add Roadmap Item'),
@@ -101,7 +101,7 @@ class _MainShellState extends State<MainShell> {
           onOpenTodo: () => _openTodo(),
         );
       case _NavPage.todo:
-        // TODO supplies its own AppBar (title + add button), so the shell
+        // 'todo' supplies its own AppBar (title + add button), so the shell
         // hides its own — same arrangement SearchScreen already uses.
         return TodoScreen(
           onBack: () => _selectPage(_previousPage),
@@ -124,7 +124,9 @@ class _MainShellState extends State<MainShell> {
   Widget build(BuildContext context) {
     final colors = context.colors;
     return Scaffold(
-      appBar: (_page == _NavPage.search || _page == _NavPage.todo)
+      appBar:
+          (_page == _NavPage.search ||
+              _page == _NavPage.todo)
           ? null
           : AppBar(
               // main_shell.dart — back arrow now shown on Calendar (and Extensions)
@@ -198,8 +200,8 @@ class _BottomBar extends StatelessWidget {
         children: [
           _NavIcon(
             icon: Icons.format_list_bulleted,
-            // Home and TODO share this icon's highlight so the bar doesn't
-            // look "unselected" while you're on the TODO page.
+            // Home and 'todo' share this icon's highlight so the bar doesn't
+            // look "unselected" while you're on the 'todo' page.
             selected: current == _NavPage.home || current == _NavPage.todo,
             onTap: () => onSelect(_NavPage.home),
           ),

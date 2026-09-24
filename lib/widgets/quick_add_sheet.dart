@@ -10,7 +10,7 @@ import '../theme/app_tokens.dart';
 import '../theme/app_typography.dart';
 import 'todo_task_sheet.dart';
 
-/// The center FAB's quick-add sheet. "Create TODO" hands off to the real
+/// The center FAB's quick-add sheet. "Create 'todo'" hands off to the real
 /// task sheet and persists straight to AppDatabase — same write path
 /// TodoScreen uses — so a task created from here shows up there without
 /// any state passing through MainShell. "Add Roadmap Item" stays a
