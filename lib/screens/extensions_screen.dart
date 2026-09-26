@@ -7,6 +7,8 @@ import '../theme/app_palette.dart';
 import '../theme/app_tokens.dart';
 import '../theme/app_typography.dart';
 import '../widgets/app_snackbar.dart';
+import '../widgets/slide_page_route.dart';
+import 'extension_runner_screen.dart';
 
 /// Extensions page — installable modules. Tapping "Add Extension" opens
 /// the system file picker so the user can select a .zip they downloaded
@@ -16,12 +18,23 @@ import '../widgets/app_snackbar.dart';
 /// be installed, so the list here only ever reflects what's actually on
 /// the device.
 class ExtensionsScreen extends StatefulWidget {
-  const ExtensionsScreen({super.key, this.standalone = false});
+  const ExtensionsScreen({
+    super.key,
+    this.standalone = false,
+    this.onOpenExtension,
+  });
 
   /// True when pushed as its own route (e.g. from ContactsScreen's "Go to
   /// Extensions" button) — adds a back-button AppBar. False when embedded
   /// as a tab inside MainShell, which already provides the AppBar/back nav.
   final bool standalone;
+
+  /// Opens the generic extension-runner shell tab for a tapped card —
+  /// only available when embedded in MainShell (passed from there), so
+  /// the bottom nav stays visible. Null when standalone, since there's
+  /// no shell to switch tabs in from a route pushed on top of it; that
+  /// case falls back to pushing ExtensionRunnerScreen directly instead.
+  final void Function(String extensionType, String title)? onOpenExtension;
 
   @override
   State<ExtensionsScreen> createState() => _ExtensionsScreenState();
@@ -129,6 +142,28 @@ class _ExtensionsScreenState extends State<ExtensionsScreen> {
     }
   }
 
+  /// Opens an installed extension. Goes through the shell's tab switch
+  /// when embedded (bottom nav stays visible); falls back to a plain
+  /// push when standalone, since there's no shell tab to switch to from
+  /// a route sitting on top of MainShell.
+  void _openExtension(InstalledExtension extension) {
+    final type = extension.manifest.type;
+    final title = extension.manifest.name;
+    if (widget.onOpenExtension != null) {
+      widget.onOpenExtension!(type, title);
+      return;
+    }
+    Navigator.of(context).push(
+      slidePageRoute(
+        (_) => ExtensionRunnerScreen(
+          extensionType: type,
+          title: title,
+          onBack: () => Navigator.of(context).pop(),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
@@ -200,6 +235,7 @@ class _ExtensionsScreenState extends State<ExtensionsScreen> {
                   icon: installed.manifest.iconData,
                   title: installed.manifest.name,
                   description: installed.manifest.description,
+                  onTap: () => _openExtension(installed),
                   onUninstall: _uninstallingId == installed.storageId
                       ? null
                       : () => _confirmUninstall(installed),
@@ -254,6 +290,7 @@ class _ExtensionCard extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.description,
+    this.onTap,
     this.onUninstall,
     this.uninstalling = false,
   });
@@ -261,90 +298,97 @@ class _ExtensionCard extends StatelessWidget {
   final IconData icon;
   final String title;
   final String description;
+  final VoidCallback? onTap;
   final VoidCallback? onUninstall;
   final bool uninstalling;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: colors.surfaceContainerHigh,
-                    borderRadius: BorderRadius.circular(AppRadius.standard),
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(AppRadius.container),
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: colors.surfaceContainerHigh,
+                      borderRadius: BorderRadius.circular(AppRadius.standard),
+                    ),
+                    child: Icon(icon, color: colors.primary, size: 20),
                   ),
-                  child: Icon(icon, color: colors.primary, size: 20),
-                ),
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: colors.tertiary.withValues(alpha: 0.16),
-                        borderRadius: BorderRadius.circular(AppRadius.full),
-                      ),
-                      child: Text(
-                        'INSTALLED',
-                        style: AppTypography.labelCaps.copyWith(
-                          color: colors.tertiary,
-                          fontSize: 10,
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: colors.tertiary.withValues(alpha: 0.16),
+                          borderRadius: BorderRadius.circular(AppRadius.full),
+                        ),
+                        child: Text(
+                          'INSTALLED',
+                          style: AppTypography.labelCaps.copyWith(
+                            color: colors.tertiary,
+                            fontSize: 10,
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 4),
-                    SizedBox(
-                      width: 32,
-                      height: 32,
-                      child: uninstalling
-                          ? Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: colors.error,
+                      const SizedBox(width: 4),
+                      SizedBox(
+                        width: 32,
+                        height: 32,
+                        child: uninstalling
+                            ? Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: colors.error,
+                                ),
+                              )
+                            : IconButton(
+                                padding: EdgeInsets.zero,
+                                tooltip: 'Uninstall',
+                                onPressed: onUninstall,
+                                icon: Icon(
+                                  Icons.delete_outline,
+                                  size: 18,
+                                  color: colors.error,
+                                ),
                               ),
-                            )
-                          : IconButton(
-                              padding: EdgeInsets.zero,
-                              tooltip: 'Uninstall',
-                              onPressed: onUninstall,
-                              icon: Icon(
-                                Icons.delete_outline,
-                                size: 18,
-                                color: colors.error,
-                              ),
-                            ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.md),
-            Text(
-              title,
-              style: AppTypography.bodyLg.copyWith(
-                fontWeight: FontWeight.w600,
-                color: colors.textPrimary,
+                      ),
+                    ],
+                  ),
+                ],
               ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              description,
-              style: AppTypography.bodySm.copyWith(color: colors.textSecondary),
-            ),
-          ],
+              const SizedBox(height: AppSpacing.md),
+              Text(
+                title,
+                style: AppTypography.bodyLg.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: colors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                description,
+                style: AppTypography.bodySm.copyWith(
+                  color: colors.textSecondary,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

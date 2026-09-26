@@ -1,11 +1,14 @@
 // calender_screen
+import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
 import '../data/app_database.dart';
 import '../models/todo_task.dart';
+import '../services/notification_service.dart';
 import '../services/todo_refresh_bus.dart';
 import '../theme/app_palette.dart';
 import '../theme/app_tokens.dart';
 import '../theme/app_typography.dart';
+import '../screens/todoscreen/todo_task_sheet.dart';
 
 DateTime _dateOnly(DateTime d) => DateTime(d.year, d.month, d.day);
 
@@ -70,6 +73,35 @@ class _CalendarScreenState extends State<CalendarScreen> {
         _visibleMonth.year,
         _visibleMonth.month + delta,
       ),
+    );
+  }
+
+  /// Opens the same "New task" sheet TodoScreen uses, pre-filled to the
+  /// selected day, and persists it the same way — so the task shows up
+  /// in TODO immediately, and here too via TodoRefreshBus (which this
+  /// screen already listens to in _loadEvents above).
+  void _addTaskForSelectedDate() {
+    showTodoTaskSheet(
+      context,
+      initialDueDate: _selectedDate,
+      onSave: (task) async {
+        await AppDatabase.instance.upsertTodo(
+          TodosCompanion.insert(
+            id: task.id,
+            title: task.title,
+            category: task.category,
+            priority: task.priority.name,
+            dueDate: Value(task.dueDate),
+            isDone: Value(task.isDone),
+            notificationEnabled: Value(task.notificationEnabled),
+            alarmEnabled: Value(task.alarmEnabled),
+          ),
+        );
+        if (task.notificationEnabled && task.dueDate != null) {
+          await NotificationService.instance.scheduleTaskNotification(task);
+        }
+        TodoRefreshBus.notify();
+      },
     );
   }
 
@@ -196,11 +228,20 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 color: colors.textSecondary,
               ),
             ),
-            if (selectedEvents.isNotEmpty)
-              TextButton(
-                onPressed: () => widget.onViewDateInTodo(_selectedDate),
-                child: const Text('View in TODO'),
-              ),
+            Row(
+              children: [
+                if (selectedEvents.isNotEmpty)
+                  TextButton(
+                    onPressed: () => widget.onViewDateInTodo(_selectedDate),
+                    child: const Text('View in TODO'),
+                  ),
+                IconButton(
+                  icon: Icon(Icons.add_circle_outline, color: colors.primary),
+                  tooltip: 'Add task for this day',
+                  onPressed: _addTaskForSelectedDate,
+                ),
+              ],
+            ),
           ],
         ),
         const SizedBox(height: AppSpacing.sm),

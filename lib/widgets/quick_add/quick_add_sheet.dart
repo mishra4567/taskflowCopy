@@ -1,16 +1,50 @@
-// widgets/quick_add_sheet
+// widgets/quick_add/quick_add_sheet
 import 'package:flutter/material.dart';
 import 'package:drift/drift.dart' show Value;
-import '../data/app_database.dart';
-import '../models/todo_task.dart';
-import '../services/notification_service.dart';
-import '../services/todo_refresh_bus.dart';
-import '../theme/app_palette.dart';
-import '../theme/app_tokens.dart';
-import '../theme/app_typography.dart';
-import 'todo_task_sheet.dart';
+import '../../data/app_database.dart';
+import '../../models/todo_task.dart';
+import '../../services/notification_service.dart';
+import '../../services/todo_refresh_bus.dart';
+import '../../theme/app_palette.dart';
+import '../../theme/app_tokens.dart';
+import '../../theme/app_typography.dart';
+import '../../screens/todoscreen/todo_task_sheet.dart';
 
-/// The center FAB's quick-add sheet. "Create 'todo'" hands off to the real
+/// One extra card in the quick-add sheet, beyond the two built-in ones
+/// (Create TODO, Add Roadmap Item). [onTap] receives the sheet's own
+/// BuildContext so an action can pop the sheet itself before doing
+/// whatever it does (open a dialog, navigate, etc.) — the same way the
+/// two built-in cards already do.
+class QuickAddAction {
+  const QuickAddAction({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final void Function(BuildContext context) onTap;
+}
+
+/// Lets any part of the app add its own card to the quick-add sheet
+/// without this file needing to know about it by name — same spirit as
+/// HomeScreen's per-installed-extension card loop, just for the FAB
+/// instead of the Home list. Call [register] once (e.g. from a screen's
+/// initState) rather than on every sheet open, or it'll duplicate.
+class QuickAddRegistry {
+  QuickAddRegistry._();
+
+  static final List<QuickAddAction> _actions = [];
+
+  static void register(QuickAddAction action) => _actions.add(action);
+
+  static List<QuickAddAction> get actions => List.unmodifiable(_actions);
+}
+
+/// The center FAB's quick-add sheet. "Create TODO" hands off to the real
 /// task sheet and persists straight to AppDatabase — same write path
 /// TodoScreen uses — so a task created from here shows up there without
 /// any state passing through MainShell. "Add Roadmap Item" stays a
@@ -120,6 +154,16 @@ class _QuickAddSheet extends StatelessWidget {
               onAddRoadmapItem();
             },
           ),
+          for (final action in QuickAddRegistry.actions) ...[
+            const SizedBox(height: AppSpacing.sm),
+            _QuickAddCard(
+              icon: action.icon,
+              iconColor: colors.tertiary,
+              title: action.title,
+              subtitle: action.subtitle,
+              onTap: () => action.onTap(context),
+            ),
+          ],
         ],
       ),
     );

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import '../widgets/permissions_card.dart';
-import '../services/dev_mode_service.dart';
-import '../theme/app_palette.dart';
-import '../theme/app_tokens.dart';
-import '../theme/app_typography.dart';
+import 'permissions_card.dart';
+import '../../services/dev_mode_service.dart';
+import '../../theme/app_palette.dart';
+import '../../theme/app_tokens.dart';
+import '../../theme/app_typography.dart';
 
 /// Settings page — currently just Developer Mode, but structured as a
 /// section list so more preferences can be added the same way later.

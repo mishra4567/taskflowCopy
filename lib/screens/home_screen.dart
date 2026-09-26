@@ -3,32 +3,37 @@ import 'package:flutter/material.dart';
 import 'package:taskflow/extensions/extension_manager.dart';
 import 'package:taskflow/extensions/extension_manifest.dart';
 import 'package:taskflow/services/dev_mode_service.dart';
-import 'package:taskflow/screens/testing/testing_extension_screen.dart';
-// import 'package:taskflow/screens/todo_screen.dart';
-// import 'package:taskflow/screens/roadmap_screen.dart';
-import 'package:taskflow/screens/extension_runner_screen.dart';
-import 'package:taskflow/widgets/slide_page_route.dart';
 import '../theme/app_palette.dart';
 import '../theme/app_tokens.dart';
 import '../theme/app_typography.dart';
 
 /// Home page — the entry list of built-in modules (TODO list, Calendar,
-/// 'todo' Roadmap) plus a card per installed extension, driven entirely by
+/// TODO Roadmap) plus a card per installed extension, driven entirely by
 /// that extension's own manifest — no per-extension special casing here.
 class HomeScreen extends StatefulWidget {
   const HomeScreen({
     super.key,
     required this.onOpenCalendar,
     required this.onOpenTodo,
+    required this.onOpenTesting,
+    required this.onOpenContact,
+    required this.onOpenExtension,
   });
 
   /// Calendar lives on the bottom nav, so tapping its card here switches
   /// the shell's active tab instead of pushing a new route.
   final VoidCallback onOpenCalendar;
 
-  /// 'todo' also renders inside the shell now (so the bottom nav stays
-  /// visible on it), so its card switches tabs rather than pushing.
+  /// TODO, Testing, and any installed extension all render inside the
+  /// shell now (so the bottom nav stays visible on them), so every one
+  /// of these cards switches tabs rather than pushing a route.
   final VoidCallback onOpenTodo;
+  final VoidCallback onOpenTesting;
+  final VoidCallback onOpenContact;
+
+  /// Opens the generic extension-runner tab for one installed extension,
+  /// identified by its manifest type + display name.
+  final void Function(String extensionType, String title) onOpenExtension;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -63,11 +68,13 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  /// Re-check installed extensions whenever the user comes back to Home —
-  /// e.g. after installing Contacts from the Extensions page and pressing
-  /// back — so the card appears without needing an app restart.
-  Future<void> _navigateAndRefresh(Widget screen) async {
-    await Navigator.of(context).push(slidePageRoute((_) => screen));
+  @override
+  void didUpdateWidget(covariant HomeScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Switching back to the Home tab after installing an extension (or
+    // returning from the extension-runner/testing/contacts tabs) doesn't
+    // recreate this widget the way a pushed route's pop used to — so
+    // refresh here too, not just in initState, to pick up new installs.
     _refreshExtensions();
   }
 
@@ -89,7 +96,6 @@ class _HomeScreenState extends State<HomeScreen> {
           title: 'TODO List',
           subtitle: '3 tasks due this week',
           trailing: const _CountBadge(count: 3),
-          // onTap: () => _navigateAndRefresh(const TodoScreen()),
           onTap: widget.onOpenTodo,
         ),
         const SizedBox(height: AppSpacing.sm),
@@ -100,33 +106,36 @@ class _HomeScreenState extends State<HomeScreen> {
           subtitle: 'Two-way sync with Google Calendar',
           onTap: widget.onOpenCalendar,
         ),
+        const SizedBox(height: AppSpacing.sm),
+        _ModuleCard(
+          icon: Icons.person_outline,
+          iconColor: colors.primary,
+          title: 'Contacts',
+          subtitle: 'Manage your contacts',
+          onTap: widget.onOpenContact,
+        ),
 
-        /// testing a extension runner screen with a hardcoded extension
-        /// testing extension card
+        // Dev-mode-only card for exercising the shell-hosted Testing
+        // extension page before real extensions are driven by manifests.
         ValueListenableBuilder<bool>(
           valueListenable: DevModeService.instance.enabled,
           builder: (context, devMode, _) {
             if (!devMode) return const SizedBox.shrink();
             return Column(
               children: [
-                const SizedBox(height: AppSpacing.md),
+                const SizedBox(height: AppSpacing.sm),
                 _ModuleCard(
                   icon: Icons.chat_bubble_outline,
                   iconColor: colors.tertiary,
-                  title: 'Texting Extension',
+                  title: 'Testing Extension',
                   subtitle: 'Draft, testing build',
-                  onTap: () => _navigateAndRefresh(
-                    TestingExtensionScreen(
-                      onBack: () => Navigator.of(context).pop(),
-                    ),
-                  ),
+                  onTap: widget.onOpenTesting,
                 ),
               ],
             );
           },
         ),
 
-        /// testing extension card end
         const SizedBox(height: AppSpacing.xl),
         Text(
           'EXTENSIONS',
@@ -165,13 +174,8 @@ class _HomeScreenState extends State<HomeScreen> {
               iconColor: colors.tertiary,
               title: ext.manifest.name,
               subtitle: ext.manifest.description,
-              onTap: () => _navigateAndRefresh(
-                ExtensionRunnerScreen(
-                  extensionType: ext.manifest.type,
-                  title: ext.manifest.name,
-                  onBack: () => Navigator.of(context).pop(),
-                ),
-              ),
+              onTap: () =>
+                  widget.onOpenExtension(ext.manifest.type, ext.manifest.name),
             ),
           ],
       ],

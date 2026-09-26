@@ -1,9 +1,9 @@
 // widgets/permissions_card
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
-import '../theme/app_palette.dart';
-import '../theme/app_tokens.dart';
-import '../theme/app_typography.dart';
+import '../../theme/app_palette.dart';
+import '../../theme/app_tokens.dart';
+import '../../theme/app_typography.dart';
 
 /// Live permission status for everything TaskFlow's notification/alarm
 /// feature actually needs — not a static list, each row reflects the

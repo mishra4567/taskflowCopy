@@ -1,17 +1,21 @@
 // widgets/todo_task_sheet
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart' show Permission;
-import '../models/todo_task.dart';
-import '../services/permission_service.dart';
-import '../theme/app_palette.dart';
-import '../theme/app_tokens.dart';
-import '../theme/app_typography.dart';
+import '../../models/todo_task.dart';
+import '../../services/permission_service.dart';
+import '../../theme/app_palette.dart';
+import '../../theme/app_tokens.dart';
+import '../../theme/app_typography.dart';
 
 /// Opens the add/edit bottom sheet for a task. Pass [existing] to edit,
-/// or omit it to create a new task.
+/// or omit it to create a new task. [initialDueDate] pre-fills the due
+/// date on a *new* task (e.g. from Calendar's "+" on a selected day)
+/// without making it look like an edit — it's ignored when [existing]
+/// is given, since that already carries its own due date.
 Future<void> showTodoTaskSheet(
   BuildContext context, {
   TodoTask? existing,
+  DateTime? initialDueDate,
   required ValueChanged<TodoTask> onSave,
   VoidCallback? onDelete,
 }) {
@@ -19,15 +23,25 @@ Future<void> showTodoTaskSheet(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
-    builder: (context) =>
-        _TodoTaskSheet(existing: existing, onSave: onSave, onDelete: onDelete),
+    builder: (context) => _TodoTaskSheet(
+      existing: existing,
+      initialDueDate: initialDueDate,
+      onSave: onSave,
+      onDelete: onDelete,
+    ),
   );
 }
 
 class _TodoTaskSheet extends StatefulWidget {
-  const _TodoTaskSheet({this.existing, required this.onSave, this.onDelete});
+  const _TodoTaskSheet({
+    this.existing,
+    this.initialDueDate,
+    required this.onSave,
+    this.onDelete,
+  });
 
   final TodoTask? existing;
+  final DateTime? initialDueDate;
   final ValueChanged<TodoTask> onSave;
   final VoidCallback? onDelete;
 
@@ -55,7 +69,7 @@ class _TodoTaskSheetState extends State<_TodoTaskSheet> {
     _titleController = TextEditingController(text: existing?.title ?? '');
     _categoryController = TextEditingController(text: existing?.category ?? '');
     _priority = existing?.priority ?? TaskPriority.medium;
-    _dueDate = existing?.dueDate;
+    _dueDate = existing?.dueDate ?? widget.initialDueDate;
     _dueTime = existing?.dueDate != null
         ? TimeOfDay.fromDateTime(existing!.dueDate!)
         : null;
