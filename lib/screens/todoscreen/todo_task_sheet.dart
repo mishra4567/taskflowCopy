@@ -59,14 +59,17 @@ class _TodoTaskSheetState extends State<_TodoTaskSheet> {
   // time — TodoTask has no separate time field, dueDate carries both.
   TimeOfDay? _dueTime;
   // Multi-day fields — only meaningful (and only shown) when
-  // _isMultiDay is on. Off by default even when editing a task that
-  // happens to have an endDate, matching whatever isMultiDay reports.
+  // _isMultiDay is on. Initialised from whether the task has an end at
+  // all (not TodoTask.isMultiDay, which requires a later *calendar day*
+  // and would silently drop the end of a same-day 9:00–17:00 task the
+  // moment it was opened and saved).
   bool _isMultiDay = false;
   DateTime? _endDate;
   TimeOfDay? _endTime;
   late bool _notificationEnabled;
   late bool _alarmEnabled;
   String? _titleError;
+  String? _rangeError;
 
   @override
   void initState() {
@@ -79,7 +82,7 @@ class _TodoTaskSheetState extends State<_TodoTaskSheet> {
     _dueTime = existing?.dueDate != null
         ? TimeOfDay.fromDateTime(existing!.dueDate!)
         : null;
-    _isMultiDay = existing?.isMultiDay ?? false;
+    _isMultiDay = existing?.endDate != null;
     _endDate = existing?.endDate;
     _endTime = existing?.endDate != null
         ? TimeOfDay.fromDateTime(existing!.endDate!)
@@ -103,7 +106,12 @@ class _TodoTaskSheetState extends State<_TodoTaskSheet> {
       firstDate: DateTime(now.year - 1),
       lastDate: DateTime(now.year + 5),
     );
-    if (picked != null) setState(() => _dueDate = picked);
+    if (picked != null) {
+      setState(() {
+        _dueDate = picked;
+        _rangeError = null;
+      });
+    }
   }
 
   Future<void> _pickTime() async {
@@ -117,6 +125,7 @@ class _TodoTaskSheetState extends State<_TodoTaskSheet> {
         // to today so "3:30 PM" always has a day to sit on.
         _dueDate ??= DateTime.now();
         _dueTime = picked;
+        _rangeError = null;
       });
     }
   }
@@ -137,15 +146,24 @@ class _TodoTaskSheetState extends State<_TodoTaskSheet> {
   }
 
   Future<void> _pickEndDate() async {
-    final base = _endDate ?? _dueDate ?? DateTime.now();
+    DateTime dateOnly(DateTime d) => DateTime(d.year, d.month, d.day);
+    final base = dateOnly(_endDate ?? _dueDate ?? DateTime.now());
+    // Can't end before the task starts. Clamp initialDate up to firstDate:
+    // if the start date was moved past an already-picked end, base would
+    // fall before firstDate and showDatePicker asserts on that.
+    final first = dateOnly(_dueDate ?? DateTime(base.year - 1));
     final picked = await showDatePicker(
       context: context,
-      initialDate: base,
-      // Can't end before the task starts.
-      firstDate: _dueDate ?? DateTime(base.year - 1),
+      initialDate: base.isBefore(first) ? first : base,
+      firstDate: first,
       lastDate: DateTime(base.year + 5),
     );
-    if (picked != null) setState(() => _endDate = picked);
+    if (picked != null) {
+      setState(() {
+        _endDate = picked;
+        _rangeError = null;
+      });
+    }
   }
 
   Future<void> _pickEndTime() async {
@@ -157,6 +175,7 @@ class _TodoTaskSheetState extends State<_TodoTaskSheet> {
       setState(() {
         _endDate ??= _dueDate ?? DateTime.now();
         _endTime = picked;
+        _rangeError = null;
       });
     }
   }
@@ -183,6 +202,24 @@ class _TodoTaskSheetState extends State<_TodoTaskSheet> {
     }
 
     final dueDate = _combinedDueDate;
+
+    // A multi-day task needs both ends, and the end has to come after
+    // the start — catch that here instead of saving a task that shows
+    // as ending before it begins (or one whose end silently vanished).
+    if (_isMultiDay) {
+      final start = dueDate;
+      final end = _combinedEndDate;
+      final problem = (start == null || end == null)
+          ? 'Set both a start and an end for a multi-day task'
+          : !end.isAfter(start)
+          ? 'The end must be after the start'
+          : null;
+      if (problem != null) {
+        setState(() => _rangeError = problem);
+        return;
+      }
+    }
+
     // Only actually save an endDate when the switch is on — flipping it
     // off drops whatever end date/time was picked, same as clearing the
     // due date already drops the time.
@@ -424,6 +461,7 @@ class _TodoTaskSheetState extends State<_TodoTaskSheet> {
                       onPressed: () => setState(() {
                         _dueDate = null;
                         _dueTime = null;
+                        _rangeError = null;
                       }),
                     ),
                 ],
@@ -445,7 +483,10 @@ class _TodoTaskSheetState extends State<_TodoTaskSheet> {
                   ),
                 ),
                 value: _isMultiDay,
-                onChanged: (v) => setState(() => _isMultiDay = v),
+                onChanged: (v) => setState(() {
+                  _isMultiDay = v;
+                  if (!v) _rangeError = null;
+                }),
                 activeThumbColor: colors.primary,
               ),
               if (_isMultiDay) ...[
@@ -493,10 +534,19 @@ class _TodoTaskSheetState extends State<_TodoTaskSheet> {
                         onPressed: () => setState(() {
                           _endDate = null;
                           _endTime = null;
+                          _rangeError = null;
                         }),
                       ),
                   ],
                 ),
+                if (_rangeError != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      _rangeError!,
+                      style: AppTypography.bodySm.copyWith(color: colors.error),
+                    ),
+                  ),
                 const SizedBox(height: AppSpacing.sm),
               ],
 
