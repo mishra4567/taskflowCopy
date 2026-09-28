@@ -58,7 +58,18 @@ class _CalendarScreenState extends State<CalendarScreen> {
     for (final task in tasks) {
       final due = task.dueDate;
       if (due == null) continue;
-      grouped.putIfAbsent(_dateOnly(due), () => []).add(task);
+      final startDay = _dateOnly(due);
+      // A multi-day task gets a marker/agenda entry on every day it
+      // spans, not just its start — single-day tasks (no endDate, or
+      // endDate on the same day) fall through to the single-day case.
+      final endDay = task.isMultiDay ? _dateOnly(task.endDate!) : startDay;
+      for (
+        var day = startDay;
+        !day.isAfter(endDay);
+        day = day.add(const Duration(days: 1))
+      ) {
+        grouped.putIfAbsent(day, () => []).add(task);
+      }
     }
     if (!mounted) return;
     setState(() {
@@ -92,6 +103,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
             category: task.category,
             priority: task.priority.name,
             dueDate: Value(task.dueDate),
+            endDate: Value(task.endDate),
             isDone: Value(task.isDone),
             notificationEnabled: Value(task.notificationEnabled),
             alarmEnabled: Value(task.alarmEnabled),
@@ -350,6 +362,19 @@ class _AgendaCard extends StatelessWidget {
         ? TimeOfDay.fromDateTime(due).format(context)
         : null;
 
+    String subtitle;
+    if (task.isMultiDay) {
+      final start = task.dueDate!;
+      final end = task.endDate!;
+      subtitle =
+          '${task.category} · ${start.day}/${start.month}'
+          ' – ${end.day}/${end.month}';
+    } else {
+      subtitle = timeLabel == null
+          ? task.category
+          : '${task.category} · $timeLabel';
+    }
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.md),
@@ -387,9 +412,7 @@ class _AgendaCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    timeLabel == null
-                        ? task.category
-                        : '${task.category} · $timeLabel',
+                    subtitle,
                     style: AppTypography.bodySm.copyWith(
                       color: colors.textSecondary,
                     ),

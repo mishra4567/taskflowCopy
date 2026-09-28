@@ -69,6 +69,7 @@ Future<void> _persistNewTodo(TodoTask task) async {
       category: task.category,
       priority: task.priority.name,
       dueDate: Value(task.dueDate),
+      endDate: Value(task.endDate),
       isDone: Value(task.isDone),
       notificationEnabled: Value(task.notificationEnabled),
       alarmEnabled: Value(task.alarmEnabled),

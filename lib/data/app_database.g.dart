@@ -59,6 +59,17 @@ class $TodosTable extends Todos with TableInfo<$TodosTable, Todo> {
     type: DriftSqlType.dateTime,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _endDateMeta = const VerificationMeta(
+    'endDate',
+  );
+  @override
+  late final GeneratedColumn<DateTime> endDate = GeneratedColumn<DateTime>(
+    'end_date',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _isDoneMeta = const VerificationMeta('isDone');
   @override
   late final GeneratedColumn<bool> isDone = GeneratedColumn<bool>(
@@ -108,6 +119,7 @@ class $TodosTable extends Todos with TableInfo<$TodosTable, Todo> {
     category,
     priority,
     dueDate,
+    endDate,
     isDone,
     notificationEnabled,
     alarmEnabled,
@@ -157,6 +169,12 @@ class $TodosTable extends Todos with TableInfo<$TodosTable, Todo> {
       context.handle(
         _dueDateMeta,
         dueDate.isAcceptableOrUnknown(data['due_date']!, _dueDateMeta),
+      );
+    }
+    if (data.containsKey('end_date')) {
+      context.handle(
+        _endDateMeta,
+        endDate.isAcceptableOrUnknown(data['end_date']!, _endDateMeta),
       );
     }
     if (data.containsKey('is_done')) {
@@ -212,6 +230,10 @@ class $TodosTable extends Todos with TableInfo<$TodosTable, Todo> {
         DriftSqlType.dateTime,
         data['${effectivePrefix}due_date'],
       ),
+      endDate: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}end_date'],
+      ),
       isDone: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}is_done'],
@@ -239,6 +261,7 @@ class Todo extends DataClass implements Insertable<Todo> {
   final String category;
   final String priority;
   final DateTime? dueDate;
+  final DateTime? endDate;
   final bool isDone;
   final bool notificationEnabled;
   final bool alarmEnabled;
@@ -248,6 +271,7 @@ class Todo extends DataClass implements Insertable<Todo> {
     required this.category,
     required this.priority,
     this.dueDate,
+    this.endDate,
     required this.isDone,
     required this.notificationEnabled,
     required this.alarmEnabled,
@@ -261,6 +285,9 @@ class Todo extends DataClass implements Insertable<Todo> {
     map['priority'] = Variable<String>(priority);
     if (!nullToAbsent || dueDate != null) {
       map['due_date'] = Variable<DateTime>(dueDate);
+    }
+    if (!nullToAbsent || endDate != null) {
+      map['end_date'] = Variable<DateTime>(endDate);
     }
     map['is_done'] = Variable<bool>(isDone);
     map['notification_enabled'] = Variable<bool>(notificationEnabled);
@@ -277,6 +304,9 @@ class Todo extends DataClass implements Insertable<Todo> {
       dueDate: dueDate == null && nullToAbsent
           ? const Value.absent()
           : Value(dueDate),
+      endDate: endDate == null && nullToAbsent
+          ? const Value.absent()
+          : Value(endDate),
       isDone: Value(isDone),
       notificationEnabled: Value(notificationEnabled),
       alarmEnabled: Value(alarmEnabled),
@@ -294,6 +324,7 @@ class Todo extends DataClass implements Insertable<Todo> {
       category: serializer.fromJson<String>(json['category']),
       priority: serializer.fromJson<String>(json['priority']),
       dueDate: serializer.fromJson<DateTime?>(json['dueDate']),
+      endDate: serializer.fromJson<DateTime?>(json['endDate']),
       isDone: serializer.fromJson<bool>(json['isDone']),
       notificationEnabled: serializer.fromJson<bool>(
         json['notificationEnabled'],
@@ -310,6 +341,7 @@ class Todo extends DataClass implements Insertable<Todo> {
       'category': serializer.toJson<String>(category),
       'priority': serializer.toJson<String>(priority),
       'dueDate': serializer.toJson<DateTime?>(dueDate),
+      'endDate': serializer.toJson<DateTime?>(endDate),
       'isDone': serializer.toJson<bool>(isDone),
       'notificationEnabled': serializer.toJson<bool>(notificationEnabled),
       'alarmEnabled': serializer.toJson<bool>(alarmEnabled),
@@ -322,6 +354,7 @@ class Todo extends DataClass implements Insertable<Todo> {
     String? category,
     String? priority,
     Value<DateTime?> dueDate = const Value.absent(),
+    Value<DateTime?> endDate = const Value.absent(),
     bool? isDone,
     bool? notificationEnabled,
     bool? alarmEnabled,
@@ -331,6 +364,7 @@ class Todo extends DataClass implements Insertable<Todo> {
     category: category ?? this.category,
     priority: priority ?? this.priority,
     dueDate: dueDate.present ? dueDate.value : this.dueDate,
+    endDate: endDate.present ? endDate.value : this.endDate,
     isDone: isDone ?? this.isDone,
     notificationEnabled: notificationEnabled ?? this.notificationEnabled,
     alarmEnabled: alarmEnabled ?? this.alarmEnabled,
@@ -342,6 +376,7 @@ class Todo extends DataClass implements Insertable<Todo> {
       category: data.category.present ? data.category.value : this.category,
       priority: data.priority.present ? data.priority.value : this.priority,
       dueDate: data.dueDate.present ? data.dueDate.value : this.dueDate,
+      endDate: data.endDate.present ? data.endDate.value : this.endDate,
       isDone: data.isDone.present ? data.isDone.value : this.isDone,
       notificationEnabled: data.notificationEnabled.present
           ? data.notificationEnabled.value
@@ -360,6 +395,7 @@ class Todo extends DataClass implements Insertable<Todo> {
           ..write('category: $category, ')
           ..write('priority: $priority, ')
           ..write('dueDate: $dueDate, ')
+          ..write('endDate: $endDate, ')
           ..write('isDone: $isDone, ')
           ..write('notificationEnabled: $notificationEnabled, ')
           ..write('alarmEnabled: $alarmEnabled')
@@ -374,6 +410,7 @@ class Todo extends DataClass implements Insertable<Todo> {
     category,
     priority,
     dueDate,
+    endDate,
     isDone,
     notificationEnabled,
     alarmEnabled,
@@ -387,6 +424,7 @@ class Todo extends DataClass implements Insertable<Todo> {
           other.category == this.category &&
           other.priority == this.priority &&
           other.dueDate == this.dueDate &&
+          other.endDate == this.endDate &&
           other.isDone == this.isDone &&
           other.notificationEnabled == this.notificationEnabled &&
           other.alarmEnabled == this.alarmEnabled);
@@ -398,6 +436,7 @@ class TodosCompanion extends UpdateCompanion<Todo> {
   final Value<String> category;
   final Value<String> priority;
   final Value<DateTime?> dueDate;
+  final Value<DateTime?> endDate;
   final Value<bool> isDone;
   final Value<bool> notificationEnabled;
   final Value<bool> alarmEnabled;
@@ -408,6 +447,7 @@ class TodosCompanion extends UpdateCompanion<Todo> {
     this.category = const Value.absent(),
     this.priority = const Value.absent(),
     this.dueDate = const Value.absent(),
+    this.endDate = const Value.absent(),
     this.isDone = const Value.absent(),
     this.notificationEnabled = const Value.absent(),
     this.alarmEnabled = const Value.absent(),
@@ -419,6 +459,7 @@ class TodosCompanion extends UpdateCompanion<Todo> {
     required String category,
     required String priority,
     this.dueDate = const Value.absent(),
+    this.endDate = const Value.absent(),
     this.isDone = const Value.absent(),
     this.notificationEnabled = const Value.absent(),
     this.alarmEnabled = const Value.absent(),
@@ -433,6 +474,7 @@ class TodosCompanion extends UpdateCompanion<Todo> {
     Expression<String>? category,
     Expression<String>? priority,
     Expression<DateTime>? dueDate,
+    Expression<DateTime>? endDate,
     Expression<bool>? isDone,
     Expression<bool>? notificationEnabled,
     Expression<bool>? alarmEnabled,
@@ -444,6 +486,7 @@ class TodosCompanion extends UpdateCompanion<Todo> {
       if (category != null) 'category': category,
       if (priority != null) 'priority': priority,
       if (dueDate != null) 'due_date': dueDate,
+      if (endDate != null) 'end_date': endDate,
       if (isDone != null) 'is_done': isDone,
       if (notificationEnabled != null)
         'notification_enabled': notificationEnabled,
@@ -458,6 +501,7 @@ class TodosCompanion extends UpdateCompanion<Todo> {
     Value<String>? category,
     Value<String>? priority,
     Value<DateTime?>? dueDate,
+    Value<DateTime?>? endDate,
     Value<bool>? isDone,
     Value<bool>? notificationEnabled,
     Value<bool>? alarmEnabled,
@@ -469,6 +513,7 @@ class TodosCompanion extends UpdateCompanion<Todo> {
       category: category ?? this.category,
       priority: priority ?? this.priority,
       dueDate: dueDate ?? this.dueDate,
+      endDate: endDate ?? this.endDate,
       isDone: isDone ?? this.isDone,
       notificationEnabled: notificationEnabled ?? this.notificationEnabled,
       alarmEnabled: alarmEnabled ?? this.alarmEnabled,
@@ -494,6 +539,9 @@ class TodosCompanion extends UpdateCompanion<Todo> {
     if (dueDate.present) {
       map['due_date'] = Variable<DateTime>(dueDate.value);
     }
+    if (endDate.present) {
+      map['end_date'] = Variable<DateTime>(endDate.value);
+    }
     if (isDone.present) {
       map['is_done'] = Variable<bool>(isDone.value);
     }
@@ -517,6 +565,7 @@ class TodosCompanion extends UpdateCompanion<Todo> {
           ..write('category: $category, ')
           ..write('priority: $priority, ')
           ..write('dueDate: $dueDate, ')
+          ..write('endDate: $endDate, ')
           ..write('isDone: $isDone, ')
           ..write('notificationEnabled: $notificationEnabled, ')
           ..write('alarmEnabled: $alarmEnabled, ')
@@ -1758,6 +1807,7 @@ typedef $$TodosTableCreateCompanionBuilder =
       required String category,
       required String priority,
       Value<DateTime?> dueDate,
+      Value<DateTime?> endDate,
       Value<bool> isDone,
       Value<bool> notificationEnabled,
       Value<bool> alarmEnabled,
@@ -1770,6 +1820,7 @@ typedef $$TodosTableUpdateCompanionBuilder =
       Value<String> category,
       Value<String> priority,
       Value<DateTime?> dueDate,
+      Value<DateTime?> endDate,
       Value<bool> isDone,
       Value<bool> notificationEnabled,
       Value<bool> alarmEnabled,
@@ -1830,6 +1881,11 @@ class $$TodosTableFilterComposer extends Composer<_$AppDatabase, $TodosTable> {
 
   ColumnFilters<DateTime> get dueDate => $composableBuilder(
     column: $table.dueDate,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get endDate => $composableBuilder(
+    column: $table.endDate,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -1908,6 +1964,11 @@ class $$TodosTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<DateTime> get endDate => $composableBuilder(
+    column: $table.endDate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<bool> get isDone => $composableBuilder(
     column: $table.isDone,
     builder: (column) => ColumnOrderings(column),
@@ -1947,6 +2008,9 @@ class $$TodosTableAnnotationComposer
 
   GeneratedColumn<DateTime> get dueDate =>
       $composableBuilder(column: $table.dueDate, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get endDate =>
+      $composableBuilder(column: $table.endDate, builder: (column) => column);
 
   GeneratedColumn<bool> get isDone =>
       $composableBuilder(column: $table.isDone, builder: (column) => column);
@@ -2020,6 +2084,7 @@ class $$TodosTableTableManager
                 Value<String> category = const Value.absent(),
                 Value<String> priority = const Value.absent(),
                 Value<DateTime?> dueDate = const Value.absent(),
+                Value<DateTime?> endDate = const Value.absent(),
                 Value<bool> isDone = const Value.absent(),
                 Value<bool> notificationEnabled = const Value.absent(),
                 Value<bool> alarmEnabled = const Value.absent(),
@@ -2030,6 +2095,7 @@ class $$TodosTableTableManager
                 category: category,
                 priority: priority,
                 dueDate: dueDate,
+                endDate: endDate,
                 isDone: isDone,
                 notificationEnabled: notificationEnabled,
                 alarmEnabled: alarmEnabled,
@@ -2042,6 +2108,7 @@ class $$TodosTableTableManager
                 required String category,
                 required String priority,
                 Value<DateTime?> dueDate = const Value.absent(),
+                Value<DateTime?> endDate = const Value.absent(),
                 Value<bool> isDone = const Value.absent(),
                 Value<bool> notificationEnabled = const Value.absent(),
                 Value<bool> alarmEnabled = const Value.absent(),
@@ -2052,6 +2119,7 @@ class $$TodosTableTableManager
                 category: category,
                 priority: priority,
                 dueDate: dueDate,
+                endDate: endDate,
                 isDone: isDone,
                 notificationEnabled: notificationEnabled,
                 alarmEnabled: alarmEnabled,

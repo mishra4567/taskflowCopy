@@ -54,8 +54,22 @@ class AppDatabase extends _$AppDatabase {
   /// this codebase — one open database connection for the app's lifetime.
   static final AppDatabase instance = AppDatabase._();
 
+  // Version history:
+  //   1 -> initial schema
+  //   2 -> added Todos.endDate (nullable), for multi-day tasks — a task
+  //        with endDate == null is unchanged, single-day as before.
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+    onCreate: (m) => m.createAll(),
+    onUpgrade: (m, from, to) async {
+      if (from < 2) {
+        await m.addColumn(todos, todos.endDate);
+      }
+    },
+  );
 
   static QueryExecutor _openConnection() {
     return driftDatabase(name: 'taskflow');

@@ -58,6 +58,12 @@ class _TodoTaskSheetState extends State<_TodoTaskSheet> {
   // are independent buttons) and only combined into one DateTime at save
   // time — TodoTask has no separate time field, dueDate carries both.
   TimeOfDay? _dueTime;
+  // Multi-day fields — only meaningful (and only shown) when
+  // _isMultiDay is on. Off by default even when editing a task that
+  // happens to have an endDate, matching whatever isMultiDay reports.
+  bool _isMultiDay = false;
+  DateTime? _endDate;
+  TimeOfDay? _endTime;
   late bool _notificationEnabled;
   late bool _alarmEnabled;
   String? _titleError;
@@ -72,6 +78,11 @@ class _TodoTaskSheetState extends State<_TodoTaskSheet> {
     _dueDate = existing?.dueDate ?? widget.initialDueDate;
     _dueTime = existing?.dueDate != null
         ? TimeOfDay.fromDateTime(existing!.dueDate!)
+        : null;
+    _isMultiDay = existing?.isMultiDay ?? false;
+    _endDate = existing?.endDate;
+    _endTime = existing?.endDate != null
+        ? TimeOfDay.fromDateTime(existing!.endDate!)
         : null;
     _notificationEnabled = existing?.notificationEnabled ?? false;
     _alarmEnabled = existing?.alarmEnabled ?? false;
@@ -125,6 +136,45 @@ class _TodoTaskSheetState extends State<_TodoTaskSheet> {
     );
   }
 
+  Future<void> _pickEndDate() async {
+    final base = _endDate ?? _dueDate ?? DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: base,
+      // Can't end before the task starts.
+      firstDate: _dueDate ?? DateTime(base.year - 1),
+      lastDate: DateTime(base.year + 5),
+    );
+    if (picked != null) setState(() => _endDate = picked);
+  }
+
+  Future<void> _pickEndTime() async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: _endTime ?? TimeOfDay.now(),
+    );
+    if (picked != null) {
+      setState(() {
+        _endDate ??= _dueDate ?? DateTime.now();
+        _endTime = picked;
+      });
+    }
+  }
+
+  /// Same combine-date-and-time pattern as [_combinedDueDate], for the
+  /// end side. Only meaningful when [_isMultiDay] is on.
+  DateTime? get _combinedEndDate {
+    if (_endDate == null) return null;
+    if (_endTime == null) return _endDate;
+    return DateTime(
+      _endDate!.year,
+      _endDate!.month,
+      _endDate!.day,
+      _endTime!.hour,
+      _endTime!.minute,
+    );
+  }
+
   void _save() {
     final title = _titleController.text.trim();
     if (title.isEmpty) {
@@ -133,6 +183,10 @@ class _TodoTaskSheetState extends State<_TodoTaskSheet> {
     }
 
     final dueDate = _combinedDueDate;
+    // Only actually save an endDate when the switch is on — flipping it
+    // off drops whatever end date/time was picked, same as clearing the
+    // due date already drops the time.
+    final endDate = _isMultiDay ? _combinedEndDate : null;
     final existing = widget.existing;
     final task = existing == null
         ? TodoTask(
@@ -143,6 +197,7 @@ class _TodoTaskSheetState extends State<_TodoTaskSheet> {
                 : _categoryController.text.trim(),
             priority: _priority,
             dueDate: dueDate,
+            endDate: endDate,
             notificationEnabled: _notificationEnabled,
             alarmEnabled: _alarmEnabled,
           )
@@ -154,6 +209,8 @@ class _TodoTaskSheetState extends State<_TodoTaskSheet> {
             priority: _priority,
             dueDate: dueDate,
             clearDueDate: dueDate == null,
+            endDate: endDate,
+            clearEndDate: endDate == null,
             notificationEnabled: _notificationEnabled,
             alarmEnabled: _alarmEnabled,
           );
@@ -336,7 +393,7 @@ class _TodoTaskSheetState extends State<_TodoTaskSheet> {
                       ),
                       label: Text(
                         _dueDate == null
-                            ? 'Set due date'
+                            ? (_isMultiDay ? 'Set start date' : 'Set due date')
                             : '${_dueDate!.day}/${_dueDate!.month}/${_dueDate!.year}',
                       ),
                     ),
@@ -372,6 +429,76 @@ class _TodoTaskSheetState extends State<_TodoTaskSheet> {
                 ],
               ),
               const SizedBox(height: AppSpacing.sm),
+
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(
+                  'Multi-day task',
+                  style: AppTypography.bodyMd.copyWith(
+                    color: colors.textPrimary,
+                  ),
+                ),
+                subtitle: Text(
+                  'Spans from the date above to an end date',
+                  style: AppTypography.bodySm.copyWith(
+                    color: colors.textSecondary,
+                  ),
+                ),
+                value: _isMultiDay,
+                onChanged: (v) => setState(() => _isMultiDay = v),
+                activeThumbColor: colors.primary,
+              ),
+              if (_isMultiDay) ...[
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: _pickEndDate,
+                        icon: Icon(
+                          Icons.calendar_today_outlined,
+                          size: 16,
+                          color: colors.onSurface,
+                        ),
+                        label: Text(
+                          _endDate == null
+                              ? 'Set end date'
+                              : '${_endDate!.day}/${_endDate!.month}/${_endDate!.year}',
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: _pickEndTime,
+                        icon: Icon(
+                          Icons.access_time_outlined,
+                          size: 16,
+                          color: colors.onSurface,
+                        ),
+                        label: Text(
+                          _endTime == null
+                              ? 'Set time'
+                              : _endTime!.format(context),
+                        ),
+                      ),
+                    ),
+                    if (_endDate != null)
+                      IconButton(
+                        icon: Icon(
+                          Icons.close,
+                          size: 18,
+                          color: colors.onSurfaceVariant,
+                        ),
+                        onPressed: () => setState(() {
+                          _endDate = null;
+                          _endTime = null;
+                        }),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.sm),
+              ],
 
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,

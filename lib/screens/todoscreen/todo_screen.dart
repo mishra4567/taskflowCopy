@@ -1,4 +1,4 @@
-// todo_screen
+/// ./screens/todoscreen/todo_screen.dart
 import 'package:flutter/material.dart';
 import 'package:drift/drift.dart' show Value;
 import '../../data/app_database.dart';
@@ -39,8 +39,19 @@ class _TodoScreenState extends State<TodoScreen> {
   TaskPriority? _priorityFilter; // null = All
   DateTime? _dateFilter;
 
-  bool _isSameDate(DateTime? a, DateTime b) =>
-      a != null && a.year == b.year && a.month == b.month && a.day == b.day;
+  /// True if [day] falls on or between a task's start and end dates —
+  /// for a single-day task that's just its due date, for a multi-day
+  /// task it's every day it spans (so Calendar's "View in TODO" on any
+  /// day in the middle of a span still finds it).
+  bool _coversDate(TodoTask t, DateTime day) {
+    final due = t.dueDate;
+    if (due == null) return false;
+    final start = DateTime(due.year, due.month, due.day);
+    final target = DateTime(day.year, day.month, day.day);
+    if (!t.isMultiDay) return start == target;
+    final end = DateTime(t.endDate!.year, t.endDate!.month, t.endDate!.day);
+    return !target.isBefore(start) && !target.isAfter(end);
+  }
 
   @override
   void initState() {
@@ -77,6 +88,7 @@ class _TodoScreenState extends State<TodoScreen> {
         category: task.category,
         priority: task.priority.name,
         dueDate: Value(task.dueDate),
+        endDate: Value(task.endDate),
         isDone: Value(task.isDone),
         notificationEnabled: Value(task.notificationEnabled),
         alarmEnabled: Value(task.alarmEnabled),
@@ -154,29 +166,37 @@ class _TodoScreenState extends State<TodoScreen> {
     final visible = _tasks.where((t) {
       final matchesPriority =
           _priorityFilter == null || t.priority == _priorityFilter;
-      final matchesDate =
-          _dateFilter == null || _isSameDate(t.dueDate, _dateFilter!);
+      final matchesDate = _dateFilter == null || _coversDate(t, _dateFilter!);
       return matchesPriority && matchesDate;
     }).toList();
 
     final pending = visible.where((t) => !t.isDone).toList();
     final completed = visible.where((t) => t.isDone).toList();
 
+    // Each task has a start day and an end day (the same day for a
+    // single-day task), so a multi-day task that began earlier but is
+    // still running lands under TODAY instead of wrongly under OVERDUE.
     List<TodoTask> bucket(
-      bool Function(DateTime) test, {
+      bool Function(DateTime start, DateTime end) test, {
       bool includeNull = false,
     }) {
       return pending.where((t) {
-        if (t.dueDate == null) return includeNull;
-        final d = DateTime(t.dueDate!.year, t.dueDate!.month, t.dueDate!.day);
-        return test(d);
+        final due = t.dueDate;
+        if (due == null) return includeNull;
+        final start = DateTime(due.year, due.month, due.day);
+        final end = t.isMultiDay
+            ? DateTime(t.endDate!.year, t.endDate!.month, t.endDate!.day)
+            : start;
+        return test(start, end);
       }).toList()..sort((a, b) => a.priority.index.compareTo(b.priority.index));
     }
 
-    final overdue = bucket((d) => d.isBefore(todayDate));
-    final dueToday = bucket((d) => d.isAtSameMomentAs(todayDate));
-    final upcoming = bucket((d) => d.isAfter(todayDate));
-    final noDate = bucket((_) => false, includeNull: true);
+    final overdue = bucket((start, end) => end.isBefore(todayDate));
+    final dueToday = bucket(
+      (start, end) => !start.isAfter(todayDate) && !end.isBefore(todayDate),
+    );
+    final upcoming = bucket((start, end) => start.isAfter(todayDate));
+    final noDate = bucket((_, _) => false, includeNull: true);
 
     return Scaffold(
       appBar: AppBar(
@@ -313,7 +333,7 @@ class _DateFilterBanner extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              'Showing tasks due ${date.day}/${date.month}/${date.year}',
+              'Showing tasks on ${date.day}/${date.month}/${date.year}',
               style: AppTypography.bodySm.copyWith(
                 color: colors.textPrimary,
                 fontWeight: FontWeight.w600,
@@ -424,10 +444,28 @@ class _TaskCard extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback onToggle;
 
+  /// The last day the task is still "live" — its end date for a
+  /// multi-day task, its due date otherwise. Overdue is judged against
+  /// this, not the start, so a task that began yesterday but runs until
+  /// next week isn't flagged overdue.
+  DateTime get _lastDay {
+    final d = task.isMultiDay ? task.endDate! : task.dueDate!;
+    return DateTime(d.year, d.month, d.day);
+  }
+
   String _dueLabel(DateTime today) {
     final d = task.dueDate!;
-    final dueDate = DateTime(d.year, d.month, d.day);
-    final diff = dueDate.difference(today).inDays;
+    final startDay = DateTime(d.year, d.month, d.day);
+
+    if (task.isMultiDay) {
+      final e = task.endDate!;
+      final range = '${d.day}/${d.month} → ${e.day}/${e.month}';
+      if (_lastDay.isBefore(today)) return 'Overdue · $range';
+      if (!startDay.isAfter(today)) return 'Ongoing · $range';
+      return range;
+    }
+
+    final diff = startDay.difference(today).inDays;
     if (diff == 0) return 'Today';
     if (diff == 1) return 'Tomorrow';
     if (diff < 0) return 'Overdue · ${d.day}/${d.month}';
@@ -449,13 +487,7 @@ class _TaskCard extends StatelessWidget {
     final today = DateTime.now();
     final todayDate = DateTime(today.year, today.month, today.day);
     final isOverdue =
-        task.dueDate != null &&
-        DateTime(
-          task.dueDate!.year,
-          task.dueDate!.month,
-          task.dueDate!.day,
-        ).isBefore(todayDate) &&
-        !task.isDone;
+        task.dueDate != null && _lastDay.isBefore(todayDate) && !task.isDone;
 
     return InkWell(
       onTap: onTap,

@@ -53,6 +53,7 @@ class TodoTask {
     required this.category,
     required this.priority,
     this.dueDate,
+    this.endDate,
     this.isDone = false,
     this.notificationEnabled = false,
     this.alarmEnabled = false,
@@ -63,11 +64,30 @@ class TodoTask {
   String title;
   String category;
   TaskPriority priority;
+
+  /// Doubles as the task's start date/time once [endDate] is set (a
+  /// multi-day task) — null [endDate] means an ordinary single-day task,
+  /// exactly as before multi-day existed.
   DateTime? dueDate;
+
+  /// Non-null only for a multi-day task; the day/time it ends on.
+  DateTime? endDate;
+
   bool isDone;
   bool notificationEnabled;
   bool alarmEnabled;
   final List<Subtask> subtasks;
+
+  /// True when this task spans more than one calendar day — i.e. has
+  /// both a start ([dueDate]) and an [endDate] on a later date. A task
+  /// with the same start and end date counts as single-day, same as one
+  /// with no endDate at all.
+  bool get isMultiDay {
+    if (dueDate == null || endDate == null) return false;
+    final start = DateTime(dueDate!.year, dueDate!.month, dueDate!.day);
+    final end = DateTime(endDate!.year, endDate!.month, endDate!.day);
+    return end.isAfter(start);
+  }
 
   /// Maps a database row (todo + its subtasks) to a TodoTask — the one
   /// place this mapping happens, so TodoScreen and CalendarScreen (and
@@ -81,6 +101,7 @@ class TodoTask {
       category: row.category,
       priority: TaskPriority.values.byName(row.priority),
       dueDate: row.dueDate,
+      endDate: row.endDate,
       isDone: row.isDone,
       notificationEnabled: row.notificationEnabled,
       alarmEnabled: row.alarmEnabled,
@@ -102,6 +123,8 @@ class TodoTask {
     TaskPriority? priority,
     DateTime? dueDate,
     bool clearDueDate = false,
+    DateTime? endDate,
+    bool clearEndDate = false,
     bool? isDone,
     bool? notificationEnabled,
     bool? alarmEnabled,
@@ -113,55 +136,11 @@ class TodoTask {
       category: category ?? this.category,
       priority: priority ?? this.priority,
       dueDate: clearDueDate ? null : (dueDate ?? this.dueDate),
+      endDate: clearEndDate ? null : (endDate ?? this.endDate),
       isDone: isDone ?? this.isDone,
       notificationEnabled: notificationEnabled ?? this.notificationEnabled,
       alarmEnabled: alarmEnabled ?? this.alarmEnabled,
       subtasks: subtasks ?? this.subtasks,
     );
   }
-
-  // /// Fixed sample data — swap for a real query once storage is wired up.
-  // static List<TodoTask> sampleTasks() {
-  //   final today = DateTime.now();
-  //   DateTime daysFromNow(int n) =>
-  //       DateTime(today.year, today.month, today.day + n);
-
-  //   return [
-  //     TodoTask(
-  //       id: 't1',
-  //       title: 'Finalize Q3 Strategy Deck',
-  //       category: 'Work',
-  //       priority: TaskPriority.high,
-  //       dueDate: daysFromNow(0),
-  //       notificationEnabled: true,
-  //     ),
-  //     TodoTask(
-  //       id: 't2',
-  //       title: 'Review Design System tokens',
-  //       category: 'Design',
-  //       priority: TaskPriority.medium,
-  //       dueDate: daysFromNow(-2),
-  //       isDone: true,
-  //     ),
-  //     TodoTask(
-  //       id: 't3',
-  //       title: 'Pay electricity bill',
-  //       category: 'Personal',
-  //       priority: TaskPriority.low,
-  //       dueDate: daysFromNow(3),
-  //       alarmEnabled: true,
-  //     ),
-  //     TodoTask(
-  //       id: 't4',
-  //       title: 'Plan roadmap sync with team',
-  //       category: 'Work',
-  //       priority: TaskPriority.medium,
-  //       subtasks: [
-  //         Subtask(title: 'Draft agenda', isDone: true),
-  //         Subtask(title: 'Send calendar invite'),
-  //       ],
-  //     ),
-  //   ];
-  // }
-
 }
