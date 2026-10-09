@@ -210,3 +210,8 @@ PENDING MANUAL STEPS (pubspec.yaml / main.dart):
 - Update main.dart to await DevModeService.instance.load() before
   runApp()
 ==================================================================
+
+      
+
+// -- Date:- 09.10.2026
+      // features added :- alarm sound, BackUp services 

@@ -1,12 +1,15 @@
+// lib/screens/morescreen/settings_screen.dart
 import 'package:flutter/material.dart';
+import 'package:taskflow/screens/morescreen/backup_card.dart';
 import 'permissions_card.dart';
+import 'alarm_sound_card.dart';
 import '../../services/dev_mode_service.dart';
 import '../../theme/app_palette.dart';
 import '../../theme/app_tokens.dart';
 import '../../theme/app_typography.dart';
 
-/// Settings page — currently just Developer Mode, but structured as a
-/// section list so more preferences can be added the same way later.
+/// Settings page — Permissions, Alarm, and Developer Mode, structured as
+/// a section list so more preferences can be added the same way later.
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
@@ -31,6 +34,24 @@ class SettingsScreen extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.sm),
           const PermissionsCard(),
+          const SizedBox(height: AppSpacing.lg),
+          Text(
+            'ALARM',
+            style: AppTypography.labelCaps.copyWith(
+              color: colors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          const AlarmSoundCard(),
+          const SizedBox(height: AppSpacing.lg),
+          Text(
+            'BackUp',
+            style: AppTypography.labelCaps.copyWith(
+              color: colors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          const BackupCard(),
           const SizedBox(height: AppSpacing.lg),
           Text(
             'DEVELOPER',

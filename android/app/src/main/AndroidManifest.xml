@@ -44,6 +44,15 @@
             </intent-filter>
         </activity>
 
+        <!-- flutter_local_notifications: receives the broadcast fired when
+             an action button (Snooze, Dismiss) is tapped on a notification.
+             Without this, the tap has nowhere to go — the button still
+             shows and visually responds, but neither cancelNotification
+             nor onDidReceiveNotificationResponse/
+             onDidReceiveBackgroundNotificationResponse ever actually runs. -->
+        <receiver
+            android:name="com.dexterous.flutterlocalnotifications.ActionBroadcastReceiver"
+            android:exported="false" />
         <!-- flutter_local_notifications: receives the alarm when a scheduled
              notification is due and posts it. Without this, zonedSchedule()
              succeeds but nothing ever appears. -->

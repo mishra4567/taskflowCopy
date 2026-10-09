@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart' show Permission;
 import '../../models/todo_task.dart';
+import '../../services/alarm_sound_service.dart';
 import '../../services/permission_service.dart';
 import '../../theme/app_palette.dart';
 import '../../theme/app_tokens.dart';
@@ -89,6 +90,10 @@ class _TodoTaskSheetState extends State<_TodoTaskSheet> {
         : null;
     _notificationEnabled = existing?.notificationEnabled ?? false;
     _alarmEnabled = existing?.alarmEnabled ?? false;
+    // The sound itself is a single app-wide setting (AlarmSoundService),
+    // not per-task — just make sure it's loaded so the row below can
+    // show the right name immediately instead of a blank first frame.
+    AlarmSoundService.instance.load();
   }
 
   @override
@@ -574,6 +579,11 @@ class _TodoTaskSheetState extends State<_TodoTaskSheet> {
                 onChanged: _onAlarmToggled,
                 activeThumbColor: colors.primary,
               ),
+              if (_alarmEnabled) ...[
+                const SizedBox(height: 4),
+                _AlarmSoundRow(onTap: () => _showAlarmSoundSheet(context)),
+                _SnoozeRow(onTap: () => _showSnoozePicker(context)),
+              ],
               const SizedBox(height: AppSpacing.md),
 
               Row(
@@ -603,6 +613,422 @@ class _TodoTaskSheetState extends State<_TodoTaskSheet> {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Opens a compact picker for the app's alarm sound — the same choices
+/// AlarmSoundCard offers in Settings (built-in sounds, phone ringtones,
+/// upload), just reachable without leaving this sheet. The sound itself
+/// is one app-wide setting (AlarmSoundService), not stored per task.
+void _showAlarmSoundSheet(BuildContext context) {
+  showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (context) => const _AlarmSoundSheet(),
+  );
+}
+
+/// Opens a small picker for how long Snooze waits before an alarm rings
+/// again — also one app-wide setting (AlarmSoundService.snoozeMinutes),
+/// not stored per task, same as the sound above. Deliberately much
+/// smaller than the sound sheet: just a row of duration chips, no
+/// preview/upload/etc. to manage.
+void _showSnoozePicker(BuildContext context) {
+  showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (context) => const _SnoozePickerSheet(),
+  );
+}
+
+/// The tappable "Alarm sound: <name>" row shown under the Alarm switch
+/// when it's on. Rebuilds on its own via AnimatedBuilder so picking a
+/// new sound in the sheet above updates this row immediately once it
+/// closes, without the task sheet needing to know or care.
+class _AlarmSoundRow extends StatelessWidget {
+  const _AlarmSoundRow({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    return AnimatedBuilder(
+      animation: AlarmSoundService.instance,
+      builder: (context, _) {
+        final sound = AlarmSoundService.instance.current;
+        return InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppRadius.standard),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Row(
+              children: [
+                Icon(Icons.alarm, size: 18, color: colors.onSurfaceVariant),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: Text(
+                    'Alarm sound: ${sound.name}',
+                    style: AppTypography.bodySm.copyWith(
+                      color: colors.textSecondary,
+                    ),
+                  ),
+                ),
+                Icon(Icons.chevron_right, size: 16, color: colors.outline),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// The tappable "Snooze: <n> min" row shown under the Alarm switch, right
+/// below _AlarmSoundRow. Same AnimatedBuilder-driven-by-the-service
+/// pattern: the sheet it opens just calls
+/// AlarmSoundService.instance.setSnoozeMinutes, and this row updates on
+/// its own without the task sheet needing to know that happened.
+class _SnoozeRow extends StatelessWidget {
+  const _SnoozeRow({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    return AnimatedBuilder(
+      animation: AlarmSoundService.instance,
+      builder: (context, _) {
+        final minutes = AlarmSoundService.instance.snoozeMinutes;
+        return InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppRadius.standard),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.snooze_outlined,
+                  size: 18,
+                  color: colors.onSurfaceVariant,
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: Text(
+                    'Snooze: $minutes min',
+                    style: AppTypography.bodySm.copyWith(
+                      color: colors.textSecondary,
+                    ),
+                  ),
+                ),
+                Icon(Icons.chevron_right, size: 16, color: colors.outline),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// Small bottom sheet for picking the snooze duration — a row of chips
+/// (snoozeOptions: 5/10/15/20/30 min) rather than a keyboard, same as
+/// Priority above. Tapping a chip saves immediately and closes; there's
+/// no separate "confirm" step, matching how _AlarmSoundSheet's built-in
+/// sound chips also apply on tap.
+class _SnoozePickerSheet extends StatelessWidget {
+  const _SnoozePickerSheet();
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    return AnimatedBuilder(
+      animation: AlarmSoundService.instance,
+      builder: (context, _) {
+        final current = AlarmSoundService.instance.snoozeMinutes;
+        return Container(
+          decoration: BoxDecoration(
+            color: colors.surfaceContainerHighest,
+            borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(AppRadius.container),
+            ),
+            border: Border.all(color: colors.borderSubtle),
+          ),
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.lg,
+            AppSpacing.md,
+            AppSpacing.lg,
+            AppSpacing.lg,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 36,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: AppSpacing.md),
+                  decoration: BoxDecoration(
+                    color: colors.borderSubtle,
+                    borderRadius: BorderRadius.circular(AppRadius.full),
+                  ),
+                ),
+              ),
+              Text(
+                'Snooze duration',
+                style: AppTypography.bodyLg.copyWith(
+                  color: colors.textPrimary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              Wrap(
+                spacing: AppSpacing.sm,
+                runSpacing: AppSpacing.sm,
+                children: [
+                  for (final minutes in snoozeOptions)
+                    _SoundChip(
+                      label: '$minutes min',
+                      selected: minutes == current,
+                      onTap: () async {
+                        await AlarmSoundService.instance.setSnoozeMinutes(
+                          minutes,
+                        );
+                        if (context.mounted) Navigator.of(context).pop();
+                      },
+                    ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// Minimal alarm-sound picker: preview the current choice, pick a
+/// built-in sound, choose a phone ringtone, upload a file, or reset to
+/// default. Deliberately a subset of AlarmSoundCard's actions — full
+/// management (and the BUILT-IN section header, etc.) stays in Settings;
+/// this is a quick swap from mid-task-creation.
+class _AlarmSoundSheet extends StatefulWidget {
+  const _AlarmSoundSheet();
+
+  @override
+  State<_AlarmSoundSheet> createState() => _AlarmSoundSheetState();
+}
+
+class _AlarmSoundSheetState extends State<_AlarmSoundSheet> {
+  late final Future<List<BuiltInSoundAsset>> _builtInSoundsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _builtInSoundsFuture = AlarmSoundService.instance.listBuiltInSoundAssets();
+  }
+
+  Future<void> _handle(Future<({bool changed, String? error})> action) async {
+    final result = await action;
+    if (!mounted) return;
+    if (result.error != null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(result.error!)));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final service = AlarmSoundService.instance;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.surfaceContainerHighest,
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(AppRadius.container),
+        ),
+        border: Border.all(color: colors.borderSubtle),
+      ),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.md,
+        AppSpacing.lg,
+        AppSpacing.lg,
+      ),
+      child: SingleChildScrollView(
+        child: AnimatedBuilder(
+          animation: service,
+          builder: (context, _) {
+            final sound = service.current;
+            final previewing = service.isPreviewing;
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: AppSpacing.md),
+                    decoration: BoxDecoration(
+                      color: colors.borderSubtle,
+                      borderRadius: BorderRadius.circular(AppRadius.full),
+                    ),
+                  ),
+                ),
+                Text(
+                  'Alarm sound',
+                  style: AppTypography.bodyLg.copyWith(
+                    color: colors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        sound.name,
+                        style: AppTypography.bodyMd.copyWith(
+                          color: colors.textPrimary,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: previewing ? 'Stop preview' : 'Preview',
+                      icon: Icon(
+                        previewing
+                            ? Icons.stop_circle_outlined
+                            : Icons.play_circle_outline,
+                        color: colors.primaryContainer,
+                      ),
+                      onPressed: () async {
+                        if (previewing) {
+                          await service.stopPreview();
+                          return;
+                        }
+                        final error = await service.preview();
+                        if (!mounted || error == null) return;
+                        ScaffoldMessenger.of(
+                          context,
+                        ).showSnackBar(SnackBar(content: Text(error)));
+                      },
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                Wrap(
+                  spacing: AppSpacing.sm,
+                  runSpacing: AppSpacing.sm,
+                  children: [
+                    TextButton.icon(
+                      onPressed: () => _handle(service.pickSystemRingtone()),
+                      icon: const Icon(Icons.library_music_outlined, size: 18),
+                      label: const Text('Choose from phone'),
+                    ),
+                    TextButton.icon(
+                      onPressed: () => _handle(service.pickAndImport()),
+                      icon: const Icon(Icons.upload_file_outlined, size: 18),
+                      label: const Text('Upload sound'),
+                    ),
+                    if (sound.isCustom)
+                      TextButton.icon(
+                        onPressed: service.resetToDefault,
+                        icon: const Icon(Icons.restore_outlined, size: 18),
+                        label: const Text('Reset to default'),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                FutureBuilder<List<BuiltInSoundAsset>>(
+                  future: _builtInSoundsFuture,
+                  builder: (context, snapshot) {
+                    final sounds = snapshot.data;
+                    if (sounds == null || sounds.isEmpty) {
+                      return const SizedBox.shrink();
+                    }
+                    return Wrap(
+                      spacing: AppSpacing.sm,
+                      runSpacing: AppSpacing.sm,
+                      children: [
+                        for (final builtIn in sounds)
+                          _SoundChip(
+                            label: builtIn.displayName,
+                            selected:
+                                sound.ownedByApp &&
+                                sound.name == builtIn.displayName,
+                            onTap: () =>
+                                _handle(service.selectBuiltInAsset(builtIn)),
+                          ),
+                      ],
+                    );
+                  },
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+/// Same selected/unselected chip treatment used elsewhere (_PriorityChip
+/// here, _FilterChip in todo_screen.dart, _BuiltInChip in
+/// alarm_sound_card.dart) — kept as its own small copy rather than an
+/// import since the one in alarm_sound_card.dart is private to that file.
+/// Also reused by _SnoozePickerSheet above for the duration chips.
+class _SoundChip extends StatelessWidget {
+  const _SoundChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final accent = colors.primaryContainer;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: selected
+              ? accent.withValues(alpha: 0.2)
+              : colors.surfaceContainer,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: selected ? accent : colors.borderSubtle),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (selected) ...[
+              Icon(Icons.check, size: 14, color: accent),
+              const SizedBox(width: 4),
+            ],
+            Text(
+              label,
+              style: AppTypography.bodySm.copyWith(
+                color: selected ? accent : colors.textSecondary,
+                fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+              ),
+            ),
+          ],
         ),
       ),
     );

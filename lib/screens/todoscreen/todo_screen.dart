@@ -109,16 +109,25 @@ class _TodoScreenState extends State<TodoScreen> {
     await _syncNotification(task);
   }
 
-  /// Reschedules the reminder on every save (covers a title/time/priority
-  /// edit replacing an old schedule) and cancels it whenever it no longer
-  /// applies — switch off, due date cleared, or the task marked done.
+  /// Reschedules the reminder/alarm on every save (covers a title/time/
+  /// priority edit replacing an old schedule) and cancels each one
+  /// whenever it no longer applies — its own switch off, due date
+  /// cleared, or the task marked done. The Notification and Alarm
+  /// switches are independent, so each is synced on its own condition
+  /// rather than one governing both.
   Future<void> _syncNotification(TodoTask task) async {
-    final shouldNotify =
-        task.notificationEnabled && task.dueDate != null && !task.isDone;
-    if (shouldNotify) {
+    final baseline = task.dueDate != null && !task.isDone;
+
+    if (task.notificationEnabled && baseline) {
       await NotificationService.instance.scheduleTaskNotification(task);
     } else {
       await NotificationService.instance.cancelTaskNotification(task.id);
+    }
+
+    if (task.alarmEnabled && baseline) {
+      await NotificationService.instance.scheduleTaskAlarm(task);
+    } else {
+      await NotificationService.instance.cancelTaskAlarm(task.id);
     }
   }
 
@@ -143,6 +152,7 @@ class _TodoScreenState extends State<TodoScreen> {
               setState(() => _tasks.removeWhere((t) => t.id == existing.id));
               AppDatabase.instance.deleteTodo(existing.id);
               NotificationService.instance.cancelTaskNotification(existing.id);
+              NotificationService.instance.cancelTaskAlarm(existing.id);
             },
     );
   }
