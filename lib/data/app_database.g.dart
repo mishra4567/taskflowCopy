@@ -1779,6 +1779,351 @@ class ExtensionRecordsCompanion extends UpdateCompanion<ExtensionRecord> {
   }
 }
 
+class $ContactsTable extends Contacts
+    with TableInfo<$ContactsTable, SavedContact> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ContactsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _firstNameMeta = const VerificationMeta(
+    'firstName',
+  );
+  @override
+  late final GeneratedColumn<String> firstName = GeneratedColumn<String>(
+    'first_name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
+  static const VerificationMeta _secondNameMeta = const VerificationMeta(
+    'secondName',
+  );
+  @override
+  late final GeneratedColumn<String> secondName = GeneratedColumn<String>(
+    'second_name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
+  static const VerificationMeta _numberMeta = const VerificationMeta('number');
+  @override
+  late final GeneratedColumn<String> number = GeneratedColumn<String>(
+    'number',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    firstName,
+    secondName,
+    number,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'contacts';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<SavedContact> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('first_name')) {
+      context.handle(
+        _firstNameMeta,
+        firstName.isAcceptableOrUnknown(data['first_name']!, _firstNameMeta),
+      );
+    }
+    if (data.containsKey('second_name')) {
+      context.handle(
+        _secondNameMeta,
+        secondName.isAcceptableOrUnknown(data['second_name']!, _secondNameMeta),
+      );
+    }
+    if (data.containsKey('number')) {
+      context.handle(
+        _numberMeta,
+        number.isAcceptableOrUnknown(data['number']!, _numberMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  SavedContact map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SavedContact(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      firstName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}first_name'],
+      )!,
+      secondName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}second_name'],
+      )!,
+      number: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}number'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $ContactsTable createAlias(String alias) {
+    return $ContactsTable(attachedDatabase, alias);
+  }
+}
+
+class SavedContact extends DataClass implements Insertable<SavedContact> {
+  final int id;
+  final String firstName;
+  final String secondName;
+  final String number;
+  final DateTime createdAt;
+  const SavedContact({
+    required this.id,
+    required this.firstName,
+    required this.secondName,
+    required this.number,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['first_name'] = Variable<String>(firstName);
+    map['second_name'] = Variable<String>(secondName);
+    map['number'] = Variable<String>(number);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  ContactsCompanion toCompanion(bool nullToAbsent) {
+    return ContactsCompanion(
+      id: Value(id),
+      firstName: Value(firstName),
+      secondName: Value(secondName),
+      number: Value(number),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory SavedContact.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SavedContact(
+      id: serializer.fromJson<int>(json['id']),
+      firstName: serializer.fromJson<String>(json['firstName']),
+      secondName: serializer.fromJson<String>(json['secondName']),
+      number: serializer.fromJson<String>(json['number']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'firstName': serializer.toJson<String>(firstName),
+      'secondName': serializer.toJson<String>(secondName),
+      'number': serializer.toJson<String>(number),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  SavedContact copyWith({
+    int? id,
+    String? firstName,
+    String? secondName,
+    String? number,
+    DateTime? createdAt,
+  }) => SavedContact(
+    id: id ?? this.id,
+    firstName: firstName ?? this.firstName,
+    secondName: secondName ?? this.secondName,
+    number: number ?? this.number,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  SavedContact copyWithCompanion(ContactsCompanion data) {
+    return SavedContact(
+      id: data.id.present ? data.id.value : this.id,
+      firstName: data.firstName.present ? data.firstName.value : this.firstName,
+      secondName: data.secondName.present
+          ? data.secondName.value
+          : this.secondName,
+      number: data.number.present ? data.number.value : this.number,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SavedContact(')
+          ..write('id: $id, ')
+          ..write('firstName: $firstName, ')
+          ..write('secondName: $secondName, ')
+          ..write('number: $number, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, firstName, secondName, number, createdAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SavedContact &&
+          other.id == this.id &&
+          other.firstName == this.firstName &&
+          other.secondName == this.secondName &&
+          other.number == this.number &&
+          other.createdAt == this.createdAt);
+}
+
+class ContactsCompanion extends UpdateCompanion<SavedContact> {
+  final Value<int> id;
+  final Value<String> firstName;
+  final Value<String> secondName;
+  final Value<String> number;
+  final Value<DateTime> createdAt;
+  const ContactsCompanion({
+    this.id = const Value.absent(),
+    this.firstName = const Value.absent(),
+    this.secondName = const Value.absent(),
+    this.number = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  });
+  ContactsCompanion.insert({
+    this.id = const Value.absent(),
+    this.firstName = const Value.absent(),
+    this.secondName = const Value.absent(),
+    this.number = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  });
+  static Insertable<SavedContact> custom({
+    Expression<int>? id,
+    Expression<String>? firstName,
+    Expression<String>? secondName,
+    Expression<String>? number,
+    Expression<DateTime>? createdAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (firstName != null) 'first_name': firstName,
+      if (secondName != null) 'second_name': secondName,
+      if (number != null) 'number': number,
+      if (createdAt != null) 'created_at': createdAt,
+    });
+  }
+
+  ContactsCompanion copyWith({
+    Value<int>? id,
+    Value<String>? firstName,
+    Value<String>? secondName,
+    Value<String>? number,
+    Value<DateTime>? createdAt,
+  }) {
+    return ContactsCompanion(
+      id: id ?? this.id,
+      firstName: firstName ?? this.firstName,
+      secondName: secondName ?? this.secondName,
+      number: number ?? this.number,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (firstName.present) {
+      map['first_name'] = Variable<String>(firstName.value);
+    }
+    if (secondName.present) {
+      map['second_name'] = Variable<String>(secondName.value);
+    }
+    if (number.present) {
+      map['number'] = Variable<String>(number.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ContactsCompanion(')
+          ..write('id: $id, ')
+          ..write('firstName: $firstName, ')
+          ..write('secondName: $secondName, ')
+          ..write('number: $number, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -1788,6 +2133,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $ExtensionRecordsTable extensionRecords = $ExtensionRecordsTable(
     this,
   );
+  late final $ContactsTable contacts = $ContactsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -1797,6 +2143,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     subtasks,
     extensions,
     extensionRecords,
+    contacts,
   ];
 }
 
@@ -2943,6 +3290,202 @@ typedef $$ExtensionRecordsTableProcessedTableManager =
       ExtensionRecord,
       PrefetchHooks Function()
     >;
+typedef $$ContactsTableCreateCompanionBuilder =
+    ContactsCompanion Function({
+      Value<int> id,
+      Value<String> firstName,
+      Value<String> secondName,
+      Value<String> number,
+      Value<DateTime> createdAt,
+    });
+typedef $$ContactsTableUpdateCompanionBuilder =
+    ContactsCompanion Function({
+      Value<int> id,
+      Value<String> firstName,
+      Value<String> secondName,
+      Value<String> number,
+      Value<DateTime> createdAt,
+    });
+
+class $$ContactsTableFilterComposer
+    extends Composer<_$AppDatabase, $ContactsTable> {
+  $$ContactsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get firstName => $composableBuilder(
+    column: $table.firstName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get secondName => $composableBuilder(
+    column: $table.secondName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get number => $composableBuilder(
+    column: $table.number,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$ContactsTableOrderingComposer
+    extends Composer<_$AppDatabase, $ContactsTable> {
+  $$ContactsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get firstName => $composableBuilder(
+    column: $table.firstName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get secondName => $composableBuilder(
+    column: $table.secondName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get number => $composableBuilder(
+    column: $table.number,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$ContactsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ContactsTable> {
+  $$ContactsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get firstName =>
+      $composableBuilder(column: $table.firstName, builder: (column) => column);
+
+  GeneratedColumn<String> get secondName => $composableBuilder(
+    column: $table.secondName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get number =>
+      $composableBuilder(column: $table.number, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+}
+
+class $$ContactsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ContactsTable,
+          SavedContact,
+          $$ContactsTableFilterComposer,
+          $$ContactsTableOrderingComposer,
+          $$ContactsTableAnnotationComposer,
+          $$ContactsTableCreateCompanionBuilder,
+          $$ContactsTableUpdateCompanionBuilder,
+          (
+            SavedContact,
+            BaseReferences<_$AppDatabase, $ContactsTable, SavedContact>,
+          ),
+          SavedContact,
+          PrefetchHooks Function()
+        > {
+  $$ContactsTableTableManager(_$AppDatabase db, $ContactsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ContactsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ContactsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ContactsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> firstName = const Value.absent(),
+                Value<String> secondName = const Value.absent(),
+                Value<String> number = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+              }) => ContactsCompanion(
+                id: id,
+                firstName: firstName,
+                secondName: secondName,
+                number: number,
+                createdAt: createdAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> firstName = const Value.absent(),
+                Value<String> secondName = const Value.absent(),
+                Value<String> number = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+              }) => ContactsCompanion.insert(
+                id: id,
+                firstName: firstName,
+                secondName: secondName,
+                number: number,
+                createdAt: createdAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$ContactsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ContactsTable,
+      SavedContact,
+      $$ContactsTableFilterComposer,
+      $$ContactsTableOrderingComposer,
+      $$ContactsTableAnnotationComposer,
+      $$ContactsTableCreateCompanionBuilder,
+      $$ContactsTableUpdateCompanionBuilder,
+      (
+        SavedContact,
+        BaseReferences<_$AppDatabase, $ContactsTable, SavedContact>,
+      ),
+      SavedContact,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -2955,4 +3498,6 @@ class $AppDatabaseManager {
       $$ExtensionsTableTableManager(_db, _db.extensions);
   $$ExtensionRecordsTableTableManager get extensionRecords =>
       $$ExtensionRecordsTableTableManager(_db, _db.extensionRecords);
+  $$ContactsTableTableManager get contacts =>
+      $$ContactsTableTableManager(_db, _db.contacts);
 }

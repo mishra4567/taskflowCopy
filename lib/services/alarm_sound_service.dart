@@ -114,6 +114,51 @@ class AlarmSoundService extends ChangeNotifier {
       _snoozeMinutes = savedSnooze;
     }
     notifyListeners();
+    // The saved sound can point at a MediaStore row that no longer exists
+    // (prefs restored by Android backup after a reinstall, the file
+    // removed from the Files app, a Samsung media cleanup, etc.) — check
+    // now rather than discovering it when an alarm tries to ring.
+    await validateCurrent();
+  }
+
+  /// True if [uri] can still be opened. The phone's own default-sound
+  /// pointer (content://settings/...) is always treated as present, and
+  /// a failure of the check itself (e.g. the native side unavailable)
+  /// counts as "present" too — wrongly discarding a working sound is a
+  /// worse outcome than keeping a doubtful one.
+  Future<bool> _uriExists(String uri) async {
+    try {
+      return await _channel.invokeMethod<bool>('exists', {'uri': uri}) ?? true;
+    } catch (_) {
+      return true;
+    }
+  }
+
+  /// If the chosen sound's file is gone, quietly falls back to the
+  /// default alarm sound instead of leaving a dead URI in place — that
+  /// URI otherwise reaches a notification channel and the preview
+  /// player, which fail with "FileNotFoundException: No item at
+  /// content://media/...". Cheap enough to call before scheduling.
+  Future<void> validateCurrent() async {
+    final sound = _current;
+    if (!sound.isCustom) return;
+    if (await _uriExists(sound.uri)) return;
+    await _forgetBuiltInCacheFor(sound.uri);
+    await _save(AlarmSound.defaultSound);
+  }
+
+  /// Built-in sounds are imported into MediaStore once and their uri is
+  /// cached per asset (see [_builtInCachePrefix]). Whenever an imported
+  /// file is deleted or found missing, the cache entry pointing at it
+  /// has to go too — otherwise the next pick of that built-in sound
+  /// reuses the dead uri instead of re-importing the asset.
+  Future<void> _forgetBuiltInCacheFor(String uri) async {
+    final prefs = await SharedPreferences.getInstance();
+    for (final key in prefs.getKeys().toList()) {
+      if (key.startsWith(_builtInCachePrefix) && prefs.getString(key) == uri) {
+        await prefs.remove(key);
+      }
+    }
   }
 
   /// Changes how long Snooze waits before an alarm rings again. Takes
@@ -292,7 +337,17 @@ class AlarmSoundService extends ChangeNotifier {
     await stopPreview();
     final cacheKey = '$_builtInCachePrefix${asset.assetPath}';
     final prefs = await SharedPreferences.getInstance();
-    final cachedUri = prefs.getString(cacheKey);
+    var cachedUri = prefs.getString(cacheKey);
+    // A cached uri is only a shortcut: the MediaStore row behind it may
+    // have been deleted since (this service deletes the previous
+    // imported file whenever the sound changes, and a backup restore or
+    // media cleanup can remove it too). Using a dead uri is what caused
+    // "FileNotFoundException: No item at content://media/...", so
+    // verify it and fall back to a fresh import when it's gone.
+    if (cachedUri != null && !await _uriExists(cachedUri)) {
+      await prefs.remove(cacheKey);
+      cachedUri = null;
+    }
 
     try {
       final uri = cachedUri ?? await _importAsset(asset, cacheKey, prefs);
@@ -357,11 +412,21 @@ class AlarmSoundService extends ChangeNotifier {
     } catch (_) {
       // Best-effort cleanup — a leftover file in Alarms/TaskFlow is harmless.
     }
+    // Whether or not the native delete succeeded, no built-in cache
+    // entry should keep pointing at this uri — see
+    // [_forgetBuiltInCacheFor].
+    await _forgetBuiltInCacheFor(uri);
   }
 
   /// Plays the current sound for a few seconds. Returns an error message
   /// if it couldn't be played.
   Future<String?> preview() async {
+    final before = _current;
+    await validateCurrent();
+    if (before.isCustom && !_current.isCustom) {
+      return '"${before.name}" is no longer on this phone — switched back '
+          'to the default alarm sound.';
+    }
     try {
       await _channel.invokeMethod('preview', {'uri': _current.uri});
       _previewing = true;

@@ -20,14 +20,21 @@ import java.io.FileNotFoundException
 
 /**
  * Backs the "taskflow/ringtone" MethodChannel used by
- * lib/services/alarm_sound_service.dart. Four calls:
+ * lib/services/alarm_sound_service.dart. Calls:
  *   import(path, name)  -> copies a picked audio file into the
  *                           Alarms/TaskFlow MediaStore collection and
  *                           returns its content:// uri (as a String).
  *   delete(uri)          -> removes a previously-imported file.
+ *   exists(uri)          -> true if the uri can still be opened. Saved
+ *                           sound uris can outlive the MediaStore row
+ *                           behind them (backup restore after a
+ *                           reinstall, Files-app delete, OEM media
+ *                           cleanup), and a dead uri fails later with
+ *                           "FileNotFoundException: No item at ...".
  *   preview(uri)          -> plays a short preview of a sound (default or
  *                           imported) on the alarm audio stream.
  *   stopPreview()         -> stops whatever preview is currently playing.
+ *   pickSystemRingtone()  -> opens the phone's own ringtone picker.
  *
  * Using MediaStore.Audio (scoped storage, Android 10/API 29+) rather than
  * raw file paths is what lets a plain notification channel's `sound`
@@ -80,6 +87,15 @@ class MainActivity : FlutterActivity() {
                         }
                     }
 
+                    "exists" -> {
+                        val uri = call.argument<String>("uri")
+                        if (uri == null) {
+                            result.success(false)
+                            return@setMethodCallHandler
+                        }
+                        result.success(uriExists(uri))
+                    }
+
                     "preview" -> {
                         val uri = call.argument<String>("uri")
                         if (uri == null) {
@@ -116,6 +132,25 @@ class MainActivity : FlutterActivity() {
                     else -> result.notImplemented()
                 }
             }
+    }
+
+    /**
+     * True if [uriString] still resolves to something that can be opened.
+     * The phone's own default-sound pointer (content://settings/...) is
+     * a live reference to whatever the system currently has selected, so
+     * it's always treated as present. Anything else is checked by
+     * actually opening it — a MediaStore row whose file or database
+     * entry is gone throws FileNotFoundException here instead of later,
+     * inside a notification channel or the preview player.
+     */
+    private fun uriExists(uriString: String): Boolean {
+        val uri = Uri.parse(uriString)
+        if (uri.scheme == "content" && uri.authority == "settings") return true
+        return try {
+            contentResolver.openAssetFileDescriptor(uri, "r")?.use { true } ?: false
+        } catch (_: Exception) {
+            false
+        }
     }
 
     /**

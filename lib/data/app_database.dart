@@ -32,17 +32,25 @@ import 'tables/todos_table.dart';
 import 'tables/subtasks_table.dart';
 import 'tables/extensions_table.dart';
 import 'tables/extension_records_table.dart';
+import 'tables/contacts_table.dart';
+// Imported (not just exported below) because the migration calls
+// migrateLegacyContacts(), an extension method defined in this file.
+import 'daos/contact_queries.dart';
 
 export 'tables/todos_table.dart';
 export 'tables/subtasks_table.dart';
 export 'tables/extensions_table.dart';
 export 'tables/extension_records_table.dart';
+export 'tables/contacts_table.dart';
 export 'daos/todo_queries.dart';
 export 'daos/extension_queries.dart';
+export 'daos/contact_queries.dart';
 
 part 'app_database.g.dart';
 
-@DriftDatabase(tables: [Todos, Subtasks, Extensions, ExtensionRecords])
+@DriftDatabase(
+  tables: [Todos, Subtasks, Extensions, ExtensionRecords, Contacts],
+)
 class AppDatabase extends _$AppDatabase {
   AppDatabase._() : super(_openConnection());
 
@@ -58,8 +66,11 @@ class AppDatabase extends _$AppDatabase {
   //   1 -> initial schema
   //   2 -> added Todos.endDate (nullable), for multi-day tasks — a task
   //        with endDate == null is unchanged, single-day as before.
+  //   3 -> added the Contacts table. Contacts used to be rows in
+  //        ExtensionRecords (extensionType 'contacts', JSON payload);
+  //        the upgrade moves them into the new table.
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -67,6 +78,13 @@ class AppDatabase extends _$AppDatabase {
     onUpgrade: (m, from, to) async {
       if (from < 2) {
         await m.addColumn(todos, todos.endDate);
+      }
+      if (from < 3) {
+        await m.createTable(contacts);
+        // Explicit `this.`: extension methods are reliably found through
+        // an explicit receiver, which is the safe form to rely on here.
+        // ignore: unnecessary_this
+        await this.migrateLegacyContacts();
       }
     },
   );

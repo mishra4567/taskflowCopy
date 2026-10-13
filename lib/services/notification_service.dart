@@ -196,9 +196,9 @@ class NotificationService {
   /// A single, reusable Dismiss-only action — for the quiet Notification
   /// channel, which (unlike Alarm) never snoozes. showsUserInterface:
   /// false keeps the tap from launching the app; cancelNotification:
-  /// true removes it. No payload needed for this one: handleAlarmAction
-  /// only ever acts on actionId 'snooze', so a plain dismiss here is a
-  /// total no-op beyond the OS removing the notification itself.
+  /// true removes it. The payload set in _scheduleEdge (not this action
+  /// itself) is what lets handleAlarmAction also cancel it explicitly as
+  /// a fallback — see that function's doc for why that fallback exists.
   static const _dismissOnlyAction = <AndroidNotificationAction>[
     AndroidNotificationAction(
       'dismiss',
@@ -458,6 +458,10 @@ class NotificationService {
   Future<void> scheduleTaskAlarm(TodoTask task) async {
     if (!await PermissionService.requestNotificationPermission()) return;
     await ensureInitialized();
+    // If the chosen sound's file has gone missing, fall back to the
+    // default now — creating a channel around a dead content:// uri
+    // makes the alarm fail with "No item at content://media/...".
+    await AlarmSoundService.instance.validateCurrent();
     final sound = AlarmSoundService.instance.current;
     await _ensureAlarmChannel(sound);
 
@@ -646,7 +650,8 @@ class NotificationService {
   }
 }
 
-/// Handles a tap on the alarm notification's Snooze/Dismiss buttons.
+/// Handles a tap on the Snooze/Dismiss buttons for either the quiet
+/// Notification or the ringing Alarm.
 ///
 /// Must be top-level (not a method) and marked @pragma('vm:entry-point')
 /// because Android can invoke this in a fresh background isolate — with
@@ -654,10 +659,10 @@ class NotificationService {
 /// while the app is backgrounded or fully killed. NotificationService.
 /// instance, AlarmSoundService, AppDatabase: none of that exists in that
 /// isolate. So this touches nothing but the plugin itself and whatever
-/// [response.payload] carries (set when the alarm was first scheduled —
-/// see _scheduleAlarmEdge), which is enough to re-ring an identical
-/// alarm [NotificationService._snoozeMinutes] later without needing to
-/// know anything about the task that created it.
+/// [response.payload] carries (set when the notification/alarm was first
+/// scheduled — see _scheduleEdge and _scheduleAutoRepeatBatch), which is
+/// enough to act correctly without needing to know anything about the
+/// task that created it.
 ///
 /// Used for both onDidReceiveNotificationResponse (foreground/same-
 /// isolate) and onDidReceiveBackgroundNotificationResponse (background
@@ -669,8 +674,8 @@ Future<void> handleAlarmAction(NotificationResponse response) async {
   final actionId = response.actionId;
   // A plain tap on the notification body (actionId null) just opens the
   // app via the plugin's own default handling — nothing for this
-  // function to do. Anything other than the two buttons this alarm
-  // actually has is also a no-op.
+  // function to do. Anything other than the two buttons either
+  // notification type actually has is also a no-op.
   if (actionId != 'snooze' && actionId != 'dismiss') return;
 
   final payload = response.payload;
@@ -715,10 +720,10 @@ Future<void> handleAlarmAction(NotificationResponse response) async {
   final body = data['body'] as String?;
   final channelId = data['channelId'] as String?;
   final soundUri = data['soundUri'] as String?;
-  // Falls back to AlarmSoundService's own default if an older payload
-  // (scheduled before this field existed) is ever snoozed — unlikely in
-  // practice, but cheap insurance against a null-check crash in a
-  // background isolate, where there's no UI to show an error from.
+  // Falls back to a sane default if an older payload (scheduled before
+  // this field existed) is ever snoozed — unlikely in practice, but
+  // cheap insurance against a null-check crash in a background isolate,
+  // where there's no UI to show an error from.
   final intervalMinutes = data['snoozeMinutes'] as int? ?? 10;
   if (title == null || body == null || channelId == null || soundUri == null) {
     return;
