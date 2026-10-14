@@ -69,8 +69,13 @@ class AppDatabase extends _$AppDatabase {
   //   3 -> added the Contacts table. Contacts used to be rows in
   //        ExtensionRecords (extensionType 'contacts', JSON payload);
   //        the upgrade moves them into the new table.
+  //   4 -> added Todos.completedAt / archivedAt / deletedAt (nullable),
+  //        for the Archive and the Trash. These must NOT live in the
+  //        version-3 step: a phone that already upgraded to 3 (for
+  //        Contacts) never runs that step again, so it would never get
+  //        the columns.
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -86,8 +91,30 @@ class AppDatabase extends _$AppDatabase {
         // ignore: unnecessary_this
         await this.migrateLegacyContacts();
       }
+      if (from < 4) {
+        // "If missing" because a database that was created fresh while
+        // the columns were still part of the version-3 step already has
+        // them, and adding a column twice is a hard SQL error.
+        await _addColumnIfMissing(m, todos, todos.completedAt);
+        await _addColumnIfMissing(m, todos, todos.archivedAt);
+        await _addColumnIfMissing(m, todos, todos.deletedAt);
+      }
     },
   );
+
+  /// Adds [column] to [table] unless the table already has a column of
+  /// that name.
+  Future<void> _addColumnIfMissing(
+    Migrator m,
+    TableInfo<Table, dynamic> table,
+    GeneratedColumn column,
+  ) async {
+    final info = await customSelect(
+      "PRAGMA table_info('${table.actualTableName}')",
+    ).get();
+    final exists = info.any((row) => row.read<String>('name') == column.name);
+    if (!exists) await m.addColumn(table, column);
+  }
 
   static QueryExecutor _openConnection() {
     return driftDatabase(name: 'taskflow');

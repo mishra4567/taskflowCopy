@@ -4,6 +4,7 @@ import 'package:taskflow/screens/calendar_screen.dart';
 import 'package:taskflow/screens/extension_runner_screen.dart';
 import 'package:taskflow/screens/contactscreen/contact_screen.dart'
     show ContactScreen, registerQuickAddContact;
+import 'package:taskflow/services/archive_trash_service.dart'; // ARCHIVE
 
 import '../screens/home_screen.dart';
 import '../screens/todoscreen/todo_screen.dart';
@@ -44,7 +45,7 @@ class MainShell extends StatefulWidget {
   State<MainShell> createState() => _MainShellState();
 }
 
-class _MainShellState extends State<MainShell> {
+class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
   _NavPage _page = _NavPage.home;
   _NavPage _previousPage = _NavPage.home;
 
@@ -69,11 +70,26 @@ class _MainShellState extends State<MainShell> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this); // ARCHIVE
     // Registers the "Add Contact" quick-add card exactly once for the
     // app's lifetime. Must run before the FAB's sheet can ever be
     // opened — MainShell is the right place since it's what builds the
     // FAB and calls showQuickAddSheet via _onQuickAdd.
     registerQuickAddContact();
+  }
+  // ARCHIVE:
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  // ARCHIVE:
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      TaskBinService.instance.autoArchiveCompleted();
+    }
   }
 
   static const _titles = {

@@ -13,11 +13,16 @@ import '../../theme/app_typography.dart';
 /// date on a *new* task (e.g. from Calendar's "+" on a selected day)
 /// without making it look like an edit — it's ignored when [existing]
 /// is given, since that already carries its own due date.
+///
+/// [onArchive] and [onDelete] only show (as buttons) when editing. Delete
+/// is labelled "Move to Trash" — callers should route it through
+/// TaskBinService.moveToTrash rather than destroying the task.
 Future<void> showTodoTaskSheet(
   BuildContext context, {
   TodoTask? existing,
   DateTime? initialDueDate,
   required ValueChanged<TodoTask> onSave,
+  VoidCallback? onArchive, // ARCHIVE
   VoidCallback? onDelete,
 }) {
   return showModalBottomSheet<void>(
@@ -28,6 +33,7 @@ Future<void> showTodoTaskSheet(
       existing: existing,
       initialDueDate: initialDueDate,
       onSave: onSave,
+      onArchive: onArchive, // ARCHIVE
       onDelete: onDelete,
     ),
   );
@@ -38,12 +44,14 @@ class _TodoTaskSheet extends StatefulWidget {
     this.existing,
     this.initialDueDate,
     required this.onSave,
+    this.onArchive, // ARCHIVE
     this.onDelete,
   });
 
   final TodoTask? existing;
   final DateTime? initialDueDate;
   final ValueChanged<TodoTask> onSave;
+  final VoidCallback? onArchive; // ARCHIVE
   final VoidCallback? onDelete;
 
   @override
@@ -258,6 +266,12 @@ class _TodoTaskSheetState extends State<_TodoTaskSheet> {
           );
 
     widget.onSave(task);
+    Navigator.of(context).pop();
+  }
+
+  // ARCHIVE:
+  void _archive() {
+    widget.onArchive?.call();
     Navigator.of(context).pop();
   }
 
@@ -586,31 +600,43 @@ class _TodoTaskSheetState extends State<_TodoTaskSheet> {
               ],
               const SizedBox(height: AppSpacing.md),
 
-              Row(
-                children: [
-                  if (isEditing && widget.onDelete != null)
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: _delete,
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: colors.error,
-                          side: BorderSide(
-                            color: colors.error.withValues(alpha: 0.4),
+              // ARCHIVE: Archive / Move to Trash (editing only) on their
+              // own row; Save is full width below so three buttons don't
+              // get cramped side by side.
+              if (isEditing &&
+                  (widget.onArchive != null || widget.onDelete != null)) ...[
+                Row(
+                  children: [
+                    if (isEditing && widget.onArchive != null) ...[
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: _archive,
+                          icon: const Icon(
+                            Icons.inventory_2_outlined,
+                            size: 18,
                           ),
+                          label: const Text('Archive'),
                         ),
-                        child: const Text('Delete'),
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                    ],
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: _save,
+                        child: Text(isEditing ? 'Save changes' : 'Add task'),
                       ),
                     ),
-                  if (isEditing && widget.onDelete != null)
-                    const SizedBox(width: AppSpacing.sm),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: _save,
-                      child: Text(isEditing ? 'Save changes' : 'Add task'),
-                    ),
-                  ),
-                ],
-              ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.sm),
+              ],
+              // SizedBox(
+              //   width: double.infinity,
+              //   child: ElevatedButton(
+              //     onPressed: _save,
+              //     child: Text(isEditing ? 'Save changes' : 'Add task'),
+              //   ),
+              // ),
             ],
           ),
         ),

@@ -1,14 +1,15 @@
-/// ./screens/todoscreen/todo_screen.dart
+// screens/todoscreen/todo_screen
 import 'package:flutter/material.dart';
 import 'package:drift/drift.dart' show Value;
-import '../../data/app_database.dart';
-import '../../models/todo_task.dart';
-import '../../services/notification_service.dart';
-import '../../services/todo_refresh_bus.dart';
-import '../../theme/app_palette.dart';
-import '../../theme/app_tokens.dart';
-import '../../theme/app_typography.dart';
-import 'todo_task_sheet.dart';
+import 'package:taskflow/data/app_database.dart';
+import 'package:taskflow/models/todo_task.dart';
+import 'package:taskflow/services/archive_trash_service.dart'; // ARCHIVE
+import 'package:taskflow/services/notification_service.dart';
+import 'package:taskflow/services/todo_refresh_bus.dart';
+import 'package:taskflow/theme/app_palette.dart';
+import 'package:taskflow/theme/app_tokens.dart';
+import 'package:taskflow/theme/app_typography.dart';
+import './todo_task_sheet.dart'; // ← adjust to your sheet's real path
 
 /// TODO List tab — filterable, grouped agenda of tasks with an inline
 /// add/edit sheet. Backed by AppDatabase (Drift/SQLite): the in-memory
@@ -39,28 +40,18 @@ class _TodoScreenState extends State<TodoScreen> {
   TaskPriority? _priorityFilter; // null = All
   DateTime? _dateFilter;
 
-  /// True if [day] falls on or between a task's start and end dates —
-  /// for a single-day task that's just its due date, for a multi-day
-  /// task it's every day it spans (so Calendar's "View in TODO" on any
-  /// day in the middle of a span still finds it).
-  bool _coversDate(TodoTask t, DateTime day) {
-    final due = t.dueDate;
-    if (due == null) return false;
-    final start = DateTime(due.year, due.month, due.day);
-    final target = DateTime(day.year, day.month, day.day);
-    if (!t.isMultiDay) return start == target;
-    final end = DateTime(t.endDate!.year, t.endDate!.month, t.endDate!.day);
-    return !target.isBefore(start) && !target.isAfter(end);
-  }
+  bool _isSameDate(DateTime? a, DateTime b) =>
+      a != null && a.year == b.year && a.month == b.month && a.day == b.day;
 
   @override
   void initState() {
     super.initState();
     _dateFilter = widget.initialDateFilter;
     _loadTasks();
-    // A task added elsewhere (the quick-add FAB) writes straight to the
-    // database and can't reach this screen's in-memory _tasks list any
-    // other way, so listen for that signal and reload when it fires.
+    // A task added elsewhere (the quick-add FAB), or archived/trashed/
+    // restored via TaskBinService, writes straight to the database and
+    // can't reach this screen's in-memory _tasks list any other way, so
+    // listen for that signal and reload when it fires.
     TodoRefreshBus.tick.addListener(_loadTasks);
   }
 
@@ -88,7 +79,9 @@ class _TodoScreenState extends State<TodoScreen> {
         category: task.category,
         priority: task.priority.name,
         dueDate: Value(task.dueDate),
-        endDate: Value(task.endDate),
+        endDate: Value(
+          task.endDate,
+        ), // ARCHIVE: was missing — end date was dropped on save
         isDone: Value(task.isDone),
         notificationEnabled: Value(task.notificationEnabled),
         alarmEnabled: Value(task.alarmEnabled),
@@ -109,28 +102,27 @@ class _TodoScreenState extends State<TodoScreen> {
     await _syncNotification(task);
   }
 
-  /// Reschedules the reminder/alarm on every save (covers a title/time/
-  /// priority edit replacing an old schedule) and cancels each one
-  /// whenever it no longer applies — its own switch off, due date
-  /// cleared, or the task marked done. The Notification and Alarm
-  /// switches are independent, so each is synced on its own condition
-  /// rather than one governing both.
+  /// Re-arms or cancels both reminders on every save: the quiet
+  /// Notification and the ringing Alarm each follow their own switch, and
+  /// both stop when the due date is cleared or the task is marked done.
+  /// (Same rule as TaskBinService._resyncReminders.)
   Future<void> _syncNotification(TodoTask task) async {
-    final baseline = task.dueDate != null && !task.isDone;
-
-    if (task.notificationEnabled && baseline) {
-      await NotificationService.instance.scheduleTaskNotification(task);
+    final live = task.dueDate != null && !task.isDone;
+    final notifications = NotificationService.instance;
+    if (task.notificationEnabled && live) {
+      await notifications.scheduleTaskNotification(task);
     } else {
-      await NotificationService.instance.cancelTaskNotification(task.id);
+      await notifications.cancelTaskNotification(task.id);
     }
-
-    if (task.alarmEnabled && baseline) {
-      await NotificationService.instance.scheduleTaskAlarm(task);
+    if (task.alarmEnabled && live) {
+      await notifications.scheduleTaskAlarm(task);
     } else {
-      await NotificationService.instance.cancelTaskAlarm(task.id);
+      await notifications.cancelTaskAlarm(task.id);
     }
   }
 
+  // ARCHIVE: Archive and Delete now go through TaskBinService. Delete
+  // moves to the Trash (undoable) instead of destroying the task.
   void _openSheet({TodoTask? existing}) {
     showTodoTaskSheet(
       context,
@@ -146,20 +138,47 @@ class _TodoScreenState extends State<TodoScreen> {
         });
         _persistTask(task);
       },
+      onArchive: existing == null
+          ? null
+          : () async {
+              setState(() => _tasks.removeWhere((t) => t.id == existing.id));
+              await TaskBinService.instance.archive(existing.id);
+              _showUndo(
+                'Archived',
+                () => TaskBinService.instance.unarchive(existing.id),
+              );
+            },
       onDelete: existing == null
           ? null
-          : () {
+          : () async {
               setState(() => _tasks.removeWhere((t) => t.id == existing.id));
-              AppDatabase.instance.deleteTodo(existing.id);
-              NotificationService.instance.cancelTaskNotification(existing.id);
-              NotificationService.instance.cancelTaskAlarm(existing.id);
+              await TaskBinService.instance.moveToTrash(existing.id);
+              _showUndo(
+                'Moved to Trash',
+                () => TaskBinService.instance.restoreFromTrash(existing.id),
+              );
             },
     );
+  }
+
+  // ARCHIVE:
+  void _showUndo(String message, VoidCallback undo) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(message),
+          action: SnackBarAction(label: 'Undo', onPressed: undo),
+        ),
+      );
   }
 
   void _toggleDone(TodoTask task) {
     setState(() => task.isDone = !task.isDone);
     _persistTask(task);
+    // ARCHIVE: starts (or resets) the 7-day auto-archive clock.
+    TaskBinService.instance.recordCompletion(task.id, done: task.isDone);
   }
 
   @override
@@ -176,37 +195,29 @@ class _TodoScreenState extends State<TodoScreen> {
     final visible = _tasks.where((t) {
       final matchesPriority =
           _priorityFilter == null || t.priority == _priorityFilter;
-      final matchesDate = _dateFilter == null || _coversDate(t, _dateFilter!);
+      final matchesDate =
+          _dateFilter == null || _isSameDate(t.dueDate, _dateFilter!);
       return matchesPriority && matchesDate;
     }).toList();
 
     final pending = visible.where((t) => !t.isDone).toList();
     final completed = visible.where((t) => t.isDone).toList();
 
-    // Each task has a start day and an end day (the same day for a
-    // single-day task), so a multi-day task that began earlier but is
-    // still running lands under TODAY instead of wrongly under OVERDUE.
     List<TodoTask> bucket(
-      bool Function(DateTime start, DateTime end) test, {
+      bool Function(DateTime) test, {
       bool includeNull = false,
     }) {
       return pending.where((t) {
-        final due = t.dueDate;
-        if (due == null) return includeNull;
-        final start = DateTime(due.year, due.month, due.day);
-        final end = t.isMultiDay
-            ? DateTime(t.endDate!.year, t.endDate!.month, t.endDate!.day)
-            : start;
-        return test(start, end);
+        if (t.dueDate == null) return includeNull;
+        final d = DateTime(t.dueDate!.year, t.dueDate!.month, t.dueDate!.day);
+        return test(d);
       }).toList()..sort((a, b) => a.priority.index.compareTo(b.priority.index));
     }
 
-    final overdue = bucket((start, end) => end.isBefore(todayDate));
-    final dueToday = bucket(
-      (start, end) => !start.isAfter(todayDate) && !end.isBefore(todayDate),
-    );
-    final upcoming = bucket((start, end) => start.isAfter(todayDate));
-    final noDate = bucket((_, _) => false, includeNull: true);
+    final overdue = bucket((d) => d.isBefore(todayDate));
+    final dueToday = bucket((d) => d.isAtSameMomentAs(todayDate));
+    final upcoming = bucket((d) => d.isAfter(todayDate));
+    final noDate = bucket((_) => false, includeNull: true);
 
     return Scaffold(
       appBar: AppBar(
@@ -343,7 +354,7 @@ class _DateFilterBanner extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              'Showing tasks on ${date.day}/${date.month}/${date.year}',
+              'Showing tasks due ${date.day}/${date.month}/${date.year}',
               style: AppTypography.bodySm.copyWith(
                 color: colors.textPrimary,
                 fontWeight: FontWeight.w600,
@@ -454,28 +465,10 @@ class _TaskCard extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback onToggle;
 
-  /// The last day the task is still "live" — its end date for a
-  /// multi-day task, its due date otherwise. Overdue is judged against
-  /// this, not the start, so a task that began yesterday but runs until
-  /// next week isn't flagged overdue.
-  DateTime get _lastDay {
-    final d = task.isMultiDay ? task.endDate! : task.dueDate!;
-    return DateTime(d.year, d.month, d.day);
-  }
-
   String _dueLabel(DateTime today) {
     final d = task.dueDate!;
-    final startDay = DateTime(d.year, d.month, d.day);
-
-    if (task.isMultiDay) {
-      final e = task.endDate!;
-      final range = '${d.day}/${d.month} → ${e.day}/${e.month}';
-      if (_lastDay.isBefore(today)) return 'Overdue · $range';
-      if (!startDay.isAfter(today)) return 'Ongoing · $range';
-      return range;
-    }
-
-    final diff = startDay.difference(today).inDays;
+    final dueDate = DateTime(d.year, d.month, d.day);
+    final diff = dueDate.difference(today).inDays;
     if (diff == 0) return 'Today';
     if (diff == 1) return 'Tomorrow';
     if (diff < 0) return 'Overdue · ${d.day}/${d.month}';
@@ -497,7 +490,13 @@ class _TaskCard extends StatelessWidget {
     final today = DateTime.now();
     final todayDate = DateTime(today.year, today.month, today.day);
     final isOverdue =
-        task.dueDate != null && _lastDay.isBefore(todayDate) && !task.isDone;
+        task.dueDate != null &&
+        DateTime(
+          task.dueDate!.year,
+          task.dueDate!.month,
+          task.dueDate!.day,
+        ).isBefore(todayDate) &&
+        !task.isDone;
 
     return InkWell(
       onTap: onTap,

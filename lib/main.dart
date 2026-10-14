@@ -5,6 +5,7 @@ import 'theme/app_theme.dart';
 import 'theme/theme_controller.dart';
 import 'widgets/main_shell.dart';
 import 'services/dev_mode_service.dart';
+import 'package:taskflow/services/archive_trash_service.dart'; // ARCHIVE
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -21,6 +22,7 @@ void main() async {
   DevModeService.instance.load();
   // ignore: unawaited_futures
   NotificationService.instance.init();
+  TaskBinService.instance.autoArchiveCompleted();
 }
 
 class TaskFlowApp extends StatelessWidget {

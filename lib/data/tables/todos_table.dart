@@ -21,6 +21,11 @@ class Todos extends Table {
   BoolColumn get notificationEnabled =>
       boolean().withDefault(const Constant(false))();
   BoolColumn get alarmEnabled => boolean().withDefault(const Constant(false))();
+  // Lifecycle timestamps. A task is in the main list when archivedAt and
+  // deletedAt are both null (see TaskBinService for the full rules).
+  DateTimeColumn get completedAt => dateTime().nullable()();
+  DateTimeColumn get archivedAt => dateTime().nullable()();
+  DateTimeColumn get deletedAt => dateTime().nullable()();
 
   @override
   Set<Column> get primaryKey => {id};

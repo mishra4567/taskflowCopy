@@ -1,12 +1,17 @@
-// screens/more_screen.dart
+// screens/morescreen/more_screen.dart
 import 'package:flutter/material.dart';
+import 'package:taskflow/services/archive_trash_service.dart'; // ARCHIVE
+import 'package:taskflow/services/todo_refresh_bus.dart'; // ARCHIVE
+import 'package:taskflow/theme/app_palette.dart';
+import 'package:taskflow/theme/app_tokens.dart';
+import 'package:taskflow/theme/app_typography.dart';
+import 'package:taskflow/theme/theme_controller.dart';
 import 'package:taskflow/widgets/slide_page_route.dart';
-import '../../theme/app_palette.dart';
-import '../../theme/app_tokens.dart';
-import '../../theme/app_typography.dart';
-import '../../theme/theme_controller.dart';
-import '../../widgets/theme_picker_dialog.dart';
-import 'settings_screen.dart';
+import 'package:taskflow/widgets/theme_picker_dialog.dart';
+import 'package:taskflow/screens/morescreen/bin_trash/archive_screen.dart'; // ARCHIVE
+import 'package:taskflow/screens/morescreen/settings_screen.dart'; // ← adjust if settings_screen.dart lives elsewhere
+import 'package:taskflow/screens/morescreen/bin_trash/trash_screen.dart'; // ARCHIVE
+
 
 /// More page — Archive, Trash, Settings, Theme, Account.
 class MoreScreen extends StatelessWidget {
@@ -33,20 +38,9 @@ class MoreScreen extends StatelessWidget {
           style: AppTypography.labelCaps.copyWith(color: colors.textSecondary),
         ),
         const SizedBox(height: AppSpacing.sm),
-        const _SectionCard(
-          rows: [
-            _RowSpec(
-              icon: Icons.inventory_2_outlined,
-              label: 'Archive',
-              showBadge: true,
-            ),
-            _RowSpec(
-              icon: Icons.delete_outline,
-              label: 'Trash Can',
-              showBadge: true,
-            ),
-          ],
-        ),
+        // ARCHIVE: was a const _SectionCard with two inert rows and a
+        // hardcoded red dot. Now real counts, real navigation.
+        const _BinRows(),
         const SizedBox(height: AppSpacing.lg),
         Text(
           'PREFERENCES',
@@ -123,6 +117,67 @@ class MoreScreen extends StatelessWidget {
               ],
             ),
           ),
+        ),
+      ],
+    );
+  }
+}
+
+// ARCHIVE: Archive + Trash Can rows with live counts. Reloads whenever
+// TaskBinService (or anything else) fires TodoRefreshBus.
+class _BinRows extends StatefulWidget {
+  const _BinRows();
+
+  @override
+  State<_BinRows> createState() => _BinRowsState();
+}
+
+class _BinRowsState extends State<_BinRows> {
+  int _archived = 0;
+  int _trashed = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+    TodoRefreshBus.tick.addListener(_load);
+  }
+
+  @override
+  void dispose() {
+    TodoRefreshBus.tick.removeListener(_load);
+    super.dispose();
+  }
+
+  Future<void> _load() async {
+    final archived = await TaskBinService.instance.archivedCount();
+    final trashed = await TaskBinService.instance.trashedCount();
+    if (!mounted) return;
+    setState(() {
+      _archived = archived;
+      _trashed = trashed;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _SectionCard(
+      rows: [
+        _RowSpec(
+          icon: Icons.inventory_2_outlined,
+          label: 'Archive',
+          trailingText: _archived == 0 ? null : '$_archived',
+          onTap: () => Navigator.of(
+            context,
+          ).push(slidePageRoute((_) => const ArchiveScreen())),
+        ),
+        _RowSpec(
+          icon: Icons.delete_outline,
+          label: 'Trash Can',
+          trailingText: _trashed == 0 ? null : '$_trashed',
+          onTap: () => Navigator.of(
+            context,
+          ).push(slidePageRoute((_) => const TrashScreen())),
         ),
       ],
     );

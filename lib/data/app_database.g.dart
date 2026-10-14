@@ -112,6 +112,39 @@ class $TodosTable extends Todos with TableInfo<$TodosTable, Todo> {
     ),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _completedAtMeta = const VerificationMeta(
+    'completedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> completedAt = GeneratedColumn<DateTime>(
+    'completed_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _archivedAtMeta = const VerificationMeta(
+    'archivedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> archivedAt = GeneratedColumn<DateTime>(
+    'archived_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
+    'deletedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
+    'deleted_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -123,6 +156,9 @@ class $TodosTable extends Todos with TableInfo<$TodosTable, Todo> {
     isDone,
     notificationEnabled,
     alarmEnabled,
+    completedAt,
+    archivedAt,
+    deletedAt,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -201,6 +237,27 @@ class $TodosTable extends Todos with TableInfo<$TodosTable, Todo> {
         ),
       );
     }
+    if (data.containsKey('completed_at')) {
+      context.handle(
+        _completedAtMeta,
+        completedAt.isAcceptableOrUnknown(
+          data['completed_at']!,
+          _completedAtMeta,
+        ),
+      );
+    }
+    if (data.containsKey('archived_at')) {
+      context.handle(
+        _archivedAtMeta,
+        archivedAt.isAcceptableOrUnknown(data['archived_at']!, _archivedAtMeta),
+      );
+    }
+    if (data.containsKey('deleted_at')) {
+      context.handle(
+        _deletedAtMeta,
+        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
+      );
+    }
     return context;
   }
 
@@ -246,6 +303,18 @@ class $TodosTable extends Todos with TableInfo<$TodosTable, Todo> {
         DriftSqlType.bool,
         data['${effectivePrefix}alarm_enabled'],
       )!,
+      completedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}completed_at'],
+      ),
+      archivedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}archived_at'],
+      ),
+      deletedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}deleted_at'],
+      ),
     );
   }
 
@@ -265,6 +334,9 @@ class Todo extends DataClass implements Insertable<Todo> {
   final bool isDone;
   final bool notificationEnabled;
   final bool alarmEnabled;
+  final DateTime? completedAt;
+  final DateTime? archivedAt;
+  final DateTime? deletedAt;
   const Todo({
     required this.id,
     required this.title,
@@ -275,6 +347,9 @@ class Todo extends DataClass implements Insertable<Todo> {
     required this.isDone,
     required this.notificationEnabled,
     required this.alarmEnabled,
+    this.completedAt,
+    this.archivedAt,
+    this.deletedAt,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -292,6 +367,15 @@ class Todo extends DataClass implements Insertable<Todo> {
     map['is_done'] = Variable<bool>(isDone);
     map['notification_enabled'] = Variable<bool>(notificationEnabled);
     map['alarm_enabled'] = Variable<bool>(alarmEnabled);
+    if (!nullToAbsent || completedAt != null) {
+      map['completed_at'] = Variable<DateTime>(completedAt);
+    }
+    if (!nullToAbsent || archivedAt != null) {
+      map['archived_at'] = Variable<DateTime>(archivedAt);
+    }
+    if (!nullToAbsent || deletedAt != null) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt);
+    }
     return map;
   }
 
@@ -310,6 +394,15 @@ class Todo extends DataClass implements Insertable<Todo> {
       isDone: Value(isDone),
       notificationEnabled: Value(notificationEnabled),
       alarmEnabled: Value(alarmEnabled),
+      completedAt: completedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(completedAt),
+      archivedAt: archivedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(archivedAt),
+      deletedAt: deletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAt),
     );
   }
 
@@ -330,6 +423,9 @@ class Todo extends DataClass implements Insertable<Todo> {
         json['notificationEnabled'],
       ),
       alarmEnabled: serializer.fromJson<bool>(json['alarmEnabled']),
+      completedAt: serializer.fromJson<DateTime?>(json['completedAt']),
+      archivedAt: serializer.fromJson<DateTime?>(json['archivedAt']),
+      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
     );
   }
   @override
@@ -345,6 +441,9 @@ class Todo extends DataClass implements Insertable<Todo> {
       'isDone': serializer.toJson<bool>(isDone),
       'notificationEnabled': serializer.toJson<bool>(notificationEnabled),
       'alarmEnabled': serializer.toJson<bool>(alarmEnabled),
+      'completedAt': serializer.toJson<DateTime?>(completedAt),
+      'archivedAt': serializer.toJson<DateTime?>(archivedAt),
+      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
     };
   }
 
@@ -358,6 +457,9 @@ class Todo extends DataClass implements Insertable<Todo> {
     bool? isDone,
     bool? notificationEnabled,
     bool? alarmEnabled,
+    Value<DateTime?> completedAt = const Value.absent(),
+    Value<DateTime?> archivedAt = const Value.absent(),
+    Value<DateTime?> deletedAt = const Value.absent(),
   }) => Todo(
     id: id ?? this.id,
     title: title ?? this.title,
@@ -368,6 +470,9 @@ class Todo extends DataClass implements Insertable<Todo> {
     isDone: isDone ?? this.isDone,
     notificationEnabled: notificationEnabled ?? this.notificationEnabled,
     alarmEnabled: alarmEnabled ?? this.alarmEnabled,
+    completedAt: completedAt.present ? completedAt.value : this.completedAt,
+    archivedAt: archivedAt.present ? archivedAt.value : this.archivedAt,
+    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
   );
   Todo copyWithCompanion(TodosCompanion data) {
     return Todo(
@@ -384,6 +489,13 @@ class Todo extends DataClass implements Insertable<Todo> {
       alarmEnabled: data.alarmEnabled.present
           ? data.alarmEnabled.value
           : this.alarmEnabled,
+      completedAt: data.completedAt.present
+          ? data.completedAt.value
+          : this.completedAt,
+      archivedAt: data.archivedAt.present
+          ? data.archivedAt.value
+          : this.archivedAt,
+      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
     );
   }
 
@@ -398,7 +510,10 @@ class Todo extends DataClass implements Insertable<Todo> {
           ..write('endDate: $endDate, ')
           ..write('isDone: $isDone, ')
           ..write('notificationEnabled: $notificationEnabled, ')
-          ..write('alarmEnabled: $alarmEnabled')
+          ..write('alarmEnabled: $alarmEnabled, ')
+          ..write('completedAt: $completedAt, ')
+          ..write('archivedAt: $archivedAt, ')
+          ..write('deletedAt: $deletedAt')
           ..write(')'))
         .toString();
   }
@@ -414,6 +529,9 @@ class Todo extends DataClass implements Insertable<Todo> {
     isDone,
     notificationEnabled,
     alarmEnabled,
+    completedAt,
+    archivedAt,
+    deletedAt,
   );
   @override
   bool operator ==(Object other) =>
@@ -427,7 +545,10 @@ class Todo extends DataClass implements Insertable<Todo> {
           other.endDate == this.endDate &&
           other.isDone == this.isDone &&
           other.notificationEnabled == this.notificationEnabled &&
-          other.alarmEnabled == this.alarmEnabled);
+          other.alarmEnabled == this.alarmEnabled &&
+          other.completedAt == this.completedAt &&
+          other.archivedAt == this.archivedAt &&
+          other.deletedAt == this.deletedAt);
 }
 
 class TodosCompanion extends UpdateCompanion<Todo> {
@@ -440,6 +561,9 @@ class TodosCompanion extends UpdateCompanion<Todo> {
   final Value<bool> isDone;
   final Value<bool> notificationEnabled;
   final Value<bool> alarmEnabled;
+  final Value<DateTime?> completedAt;
+  final Value<DateTime?> archivedAt;
+  final Value<DateTime?> deletedAt;
   final Value<int> rowid;
   const TodosCompanion({
     this.id = const Value.absent(),
@@ -451,6 +575,9 @@ class TodosCompanion extends UpdateCompanion<Todo> {
     this.isDone = const Value.absent(),
     this.notificationEnabled = const Value.absent(),
     this.alarmEnabled = const Value.absent(),
+    this.completedAt = const Value.absent(),
+    this.archivedAt = const Value.absent(),
+    this.deletedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   TodosCompanion.insert({
@@ -463,6 +590,9 @@ class TodosCompanion extends UpdateCompanion<Todo> {
     this.isDone = const Value.absent(),
     this.notificationEnabled = const Value.absent(),
     this.alarmEnabled = const Value.absent(),
+    this.completedAt = const Value.absent(),
+    this.archivedAt = const Value.absent(),
+    this.deletedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        title = Value(title),
@@ -478,6 +608,9 @@ class TodosCompanion extends UpdateCompanion<Todo> {
     Expression<bool>? isDone,
     Expression<bool>? notificationEnabled,
     Expression<bool>? alarmEnabled,
+    Expression<DateTime>? completedAt,
+    Expression<DateTime>? archivedAt,
+    Expression<DateTime>? deletedAt,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -491,6 +624,9 @@ class TodosCompanion extends UpdateCompanion<Todo> {
       if (notificationEnabled != null)
         'notification_enabled': notificationEnabled,
       if (alarmEnabled != null) 'alarm_enabled': alarmEnabled,
+      if (completedAt != null) 'completed_at': completedAt,
+      if (archivedAt != null) 'archived_at': archivedAt,
+      if (deletedAt != null) 'deleted_at': deletedAt,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -505,6 +641,9 @@ class TodosCompanion extends UpdateCompanion<Todo> {
     Value<bool>? isDone,
     Value<bool>? notificationEnabled,
     Value<bool>? alarmEnabled,
+    Value<DateTime?>? completedAt,
+    Value<DateTime?>? archivedAt,
+    Value<DateTime?>? deletedAt,
     Value<int>? rowid,
   }) {
     return TodosCompanion(
@@ -517,6 +656,9 @@ class TodosCompanion extends UpdateCompanion<Todo> {
       isDone: isDone ?? this.isDone,
       notificationEnabled: notificationEnabled ?? this.notificationEnabled,
       alarmEnabled: alarmEnabled ?? this.alarmEnabled,
+      completedAt: completedAt ?? this.completedAt,
+      archivedAt: archivedAt ?? this.archivedAt,
+      deletedAt: deletedAt ?? this.deletedAt,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -551,6 +693,15 @@ class TodosCompanion extends UpdateCompanion<Todo> {
     if (alarmEnabled.present) {
       map['alarm_enabled'] = Variable<bool>(alarmEnabled.value);
     }
+    if (completedAt.present) {
+      map['completed_at'] = Variable<DateTime>(completedAt.value);
+    }
+    if (archivedAt.present) {
+      map['archived_at'] = Variable<DateTime>(archivedAt.value);
+    }
+    if (deletedAt.present) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -569,6 +720,9 @@ class TodosCompanion extends UpdateCompanion<Todo> {
           ..write('isDone: $isDone, ')
           ..write('notificationEnabled: $notificationEnabled, ')
           ..write('alarmEnabled: $alarmEnabled, ')
+          ..write('completedAt: $completedAt, ')
+          ..write('archivedAt: $archivedAt, ')
+          ..write('deletedAt: $deletedAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -2158,6 +2312,9 @@ typedef $$TodosTableCreateCompanionBuilder =
       Value<bool> isDone,
       Value<bool> notificationEnabled,
       Value<bool> alarmEnabled,
+      Value<DateTime?> completedAt,
+      Value<DateTime?> archivedAt,
+      Value<DateTime?> deletedAt,
       Value<int> rowid,
     });
 typedef $$TodosTableUpdateCompanionBuilder =
@@ -2171,6 +2328,9 @@ typedef $$TodosTableUpdateCompanionBuilder =
       Value<bool> isDone,
       Value<bool> notificationEnabled,
       Value<bool> alarmEnabled,
+      Value<DateTime?> completedAt,
+      Value<DateTime?> archivedAt,
+      Value<DateTime?> deletedAt,
       Value<int> rowid,
     });
 
@@ -2248,6 +2408,21 @@ class $$TodosTableFilterComposer extends Composer<_$AppDatabase, $TodosTable> {
 
   ColumnFilters<bool> get alarmEnabled => $composableBuilder(
     column: $table.alarmEnabled,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get completedAt => $composableBuilder(
+    column: $table.completedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get archivedAt => $composableBuilder(
+    column: $table.archivedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -2330,6 +2505,21 @@ class $$TodosTableOrderingComposer
     column: $table.alarmEnabled,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<DateTime> get completedAt => $composableBuilder(
+    column: $table.completedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get archivedAt => $composableBuilder(
+    column: $table.archivedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$TodosTableAnnotationComposer
@@ -2371,6 +2561,19 @@ class $$TodosTableAnnotationComposer
     column: $table.alarmEnabled,
     builder: (column) => column,
   );
+
+  GeneratedColumn<DateTime> get completedAt => $composableBuilder(
+    column: $table.completedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get archivedAt => $composableBuilder(
+    column: $table.archivedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get deletedAt =>
+      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
 
   Expression<T> subtasksRefs<T extends Object>(
     Expression<T> Function($$SubtasksTableAnnotationComposer a) f,
@@ -2435,6 +2638,9 @@ class $$TodosTableTableManager
                 Value<bool> isDone = const Value.absent(),
                 Value<bool> notificationEnabled = const Value.absent(),
                 Value<bool> alarmEnabled = const Value.absent(),
+                Value<DateTime?> completedAt = const Value.absent(),
+                Value<DateTime?> archivedAt = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => TodosCompanion(
                 id: id,
@@ -2446,6 +2652,9 @@ class $$TodosTableTableManager
                 isDone: isDone,
                 notificationEnabled: notificationEnabled,
                 alarmEnabled: alarmEnabled,
+                completedAt: completedAt,
+                archivedAt: archivedAt,
+                deletedAt: deletedAt,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -2459,6 +2668,9 @@ class $$TodosTableTableManager
                 Value<bool> isDone = const Value.absent(),
                 Value<bool> notificationEnabled = const Value.absent(),
                 Value<bool> alarmEnabled = const Value.absent(),
+                Value<DateTime?> completedAt = const Value.absent(),
+                Value<DateTime?> archivedAt = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => TodosCompanion.insert(
                 id: id,
@@ -2470,6 +2682,9 @@ class $$TodosTableTableManager
                 isDone: isDone,
                 notificationEnabled: notificationEnabled,
                 alarmEnabled: alarmEnabled,
+                completedAt: completedAt,
+                archivedAt: archivedAt,
+                deletedAt: deletedAt,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
