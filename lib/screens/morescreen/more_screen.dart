@@ -9,11 +9,11 @@ import 'package:taskflow/theme/theme_controller.dart';
 import 'package:taskflow/widgets/slide_page_route.dart';
 import 'package:taskflow/widgets/theme_picker_dialog.dart';
 import 'package:taskflow/screens/morescreen/bin_trash/archive_screen.dart'; // ARCHIVE
+import 'package:taskflow/screens/morescreen/backup_screen.dart'; // BACKUP
 import 'package:taskflow/screens/morescreen/settings_screen.dart'; // ← adjust if settings_screen.dart lives elsewhere
 import 'package:taskflow/screens/morescreen/bin_trash/trash_screen.dart'; // ARCHIVE
 
-
-/// More page — Archive, Trash, Settings, Theme, Account.
+/// More page — Archive, Trash, Backup, Settings, Theme, Account.
 class MoreScreen extends StatelessWidget {
   const MoreScreen({super.key});
 
@@ -40,7 +40,8 @@ class MoreScreen extends StatelessWidget {
         const SizedBox(height: AppSpacing.sm),
         // ARCHIVE: was a const _SectionCard with two inert rows and a
         // hardcoded red dot. Now real counts, real navigation.
-        const _BinRows(),
+        // BACKUP: Backup lives here too, as its own page.
+        const _DataManagementRows(),
         const SizedBox(height: AppSpacing.lg),
         Text(
           'PREFERENCES',
@@ -123,16 +124,17 @@ class MoreScreen extends StatelessWidget {
   }
 }
 
-// ARCHIVE: Archive + Trash Can rows with live counts. Reloads whenever
-// TaskBinService (or anything else) fires TodoRefreshBus.
-class _BinRows extends StatefulWidget {
-  const _BinRows();
+// ARCHIVE: Archive + Trash Can rows with live counts, plus (BACKUP) the
+// Backup row. Reloads the counts whenever TaskBinService (or anything
+// else) fires TodoRefreshBus.
+class _DataManagementRows extends StatefulWidget {
+  const _DataManagementRows();
 
   @override
-  State<_BinRows> createState() => _BinRowsState();
+  State<_DataManagementRows> createState() => _DataManagementRowsState();
 }
 
-class _BinRowsState extends State<_BinRows> {
+class _DataManagementRowsState extends State<_DataManagementRows> {
   int _archived = 0;
   int _trashed = 0;
 
@@ -178,6 +180,14 @@ class _BinRowsState extends State<_BinRows> {
           onTap: () => Navigator.of(
             context,
           ).push(slidePageRoute((_) => const TrashScreen())),
+        ),
+        // BACKUP: backup & restore, moved here from Settings.
+        _RowSpec(
+          icon: Icons.backup_outlined,
+          label: 'Backup',
+          onTap: () => Navigator.of(
+            context,
+          ).push(slidePageRoute((_) => const BackupScreen())),
         ),
       ],
     );

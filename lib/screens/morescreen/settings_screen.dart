@@ -1,6 +1,5 @@
 // lib/screens/morescreen/settings_screen.dart
 import 'package:flutter/material.dart';
-import 'package:taskflow/screens/morescreen/backup_card.dart';
 import 'permissions_card.dart';
 import 'alarm_sound_card.dart';
 import '../../services/dev_mode_service.dart';
@@ -43,15 +42,6 @@ class SettingsScreen extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.sm),
           const AlarmSoundCard(),
-          const SizedBox(height: AppSpacing.lg),
-          Text(
-            'BackUp',
-            style: AppTypography.labelCaps.copyWith(
-              color: colors.textSecondary,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          const BackupCard(),
           const SizedBox(height: AppSpacing.lg),
           Text(
             'DEVELOPER',

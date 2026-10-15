@@ -1,6 +1,7 @@
 // screens/morescreen/bin_task_tile.dart
 import 'package:flutter/material.dart';
 import 'package:taskflow/models/todo_task.dart';
+import 'package:taskflow/services/backUp/backup_service.dart';
 import 'package:taskflow/theme/app_palette.dart';
 import 'package:taskflow/theme/app_tokens.dart';
 import 'package:taskflow/theme/app_typography.dart';
@@ -66,6 +67,62 @@ Future<bool> confirmDestructive(
     ),
   );
   return confirmed ?? false;
+}
+
+/// AppBar icon for the Archive and Trash pages that runs the same
+/// "Back up now" as Settings → Backup (BackupService.exportToZip), so
+/// there is one backup, reachable from all three places. Shows a spinner
+/// while it runs (the save dialog and the zip take a moment) and reports
+/// the result in a snackbar — including "cancelled", so closing the save
+/// dialog doesn't look like nothing happened.
+class BackupNowButton extends StatefulWidget {
+  const BackupNowButton({super.key});
+
+  @override
+  State<BackupNowButton> createState() => _BackupNowButtonState();
+}
+
+class _BackupNowButtonState extends State<BackupNowButton> {
+  bool _busy = false;
+
+  Future<void> _backUp() async {
+    if (_busy) return;
+    setState(() => _busy = true);
+
+    String message;
+    try {
+      final savedPath = await BackupService.exportToZip();
+      message = savedPath == null
+          ? 'Backup cancelled'
+          : 'Backup saved to $savedPath';
+    } on BackupException catch (e) {
+      message = e.message;
+    } catch (e) {
+      message = 'Backup failed: $e';
+    }
+
+    if (!mounted) return;
+    setState(() => _busy = false);
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    return IconButton(
+      tooltip: 'Back up now',
+      onPressed: _busy ? null : _backUp,
+      icon: _busy
+          ? const SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : Icon(Icons.backup_outlined, color: colors.onSurfaceVariant),
+    );
+  }
 }
 
 class BinEmptyState extends StatelessWidget {

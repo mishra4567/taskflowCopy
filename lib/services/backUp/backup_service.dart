@@ -1,10 +1,10 @@
 // services/backup_service
-
 import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:archive/archive.dart';
 import 'package:drift/drift.dart' show Value;
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 
 import 'package:taskflow/data/app_database.dart';
@@ -260,6 +260,47 @@ class BackupService {
       otherItems: otherCount,
       skipped: skipped,
     );
+  }
+
+  // ------------------------------------------------ save & pick (the UI)
+
+  /// "Back up now": builds the backup and asks where to save it. Returns
+  /// the saved location to show the person, or null if they cancelled
+  /// the save dialog.
+  static Future<String?> exportToZip() async {
+    final bytes = await createBackup();
+    final saved = await FilePicker.saveFile(
+      dialogTitle: 'Save TaskFlow backup',
+      fileName: fileName,
+      bytes: bytes,
+    );
+    return _asLocation(saved);
+  }
+
+  /// "Restore": asks for a backup file (.zip, or a bare .json) and
+  /// restores it. Returns null if they cancelled the picker; throws
+  /// [BackupException] (message safe to show) if the file can't be used.
+  static Future<RestoreResult?> pickAndRestore() async {
+    final file = await FilePicker.pickFile();
+    if (file == null) return null;
+
+    final Uint8List bytes;
+    try {
+      bytes = await file.readAsBytes();
+    } catch (_) {
+      throw BackupException("Couldn't read the file you picked.");
+    }
+    return restore(bytes);
+  }
+
+  /// saveFile has returned both a path String and a Uri across
+  /// file_picker versions; either becomes something displayable.
+  static String? _asLocation(Object? saved) {
+    if (saved == null) return null;
+    if (saved is Uri) {
+      return saved.scheme == 'file' ? saved.toFilePath() : saved.toString();
+    }
+    return saved.toString();
   }
 
   // --------------------------------------------------------------- helpers

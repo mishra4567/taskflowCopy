@@ -93,6 +93,7 @@ class _TrashScreenState extends State<TrashScreen> {
       appBar: AppBar(
         title: const Text('Trash Can'),
         actions: [
+          const BackupNowButton(),
           TextButton(
             onPressed: (entries == null || entries.isEmpty)
                 ? null

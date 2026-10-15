@@ -77,7 +77,10 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
     final days = TaskBinService.autoArchiveAfter.inDays;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Archive')),
+      appBar: AppBar(
+        title: const Text('Archive'),
+        actions: const [BackupNowButton()],
+      ),
       body: entries == null
           ? const Center(child: CircularProgressIndicator())
           : entries.isEmpty
