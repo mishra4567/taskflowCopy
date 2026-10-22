@@ -2278,6 +2278,639 @@ class ContactsCompanion extends UpdateCompanion<SavedContact> {
   }
 }
 
+class $ExpensesTable extends Expenses with TableInfo<$ExpensesTable, Expense> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ExpensesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _amountPaiseMeta = const VerificationMeta(
+    'amountPaise',
+  );
+  @override
+  late final GeneratedColumn<int> amountPaise = GeneratedColumn<int>(
+    'amount_paise',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _paidAtMeta = const VerificationMeta('paidAt');
+  @override
+  late final GeneratedColumn<DateTime> paidAt = GeneratedColumn<DateTime>(
+    'paid_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _payeeMeta = const VerificationMeta('payee');
+  @override
+  late final GeneratedColumn<String> payee = GeneratedColumn<String>(
+    'payee',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
+  static const VerificationMeta _categoryMeta = const VerificationMeta(
+    'category',
+  );
+  @override
+  late final GeneratedColumn<String> category = GeneratedColumn<String>(
+    'category',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('Other'),
+  );
+  static const VerificationMeta _noteMeta = const VerificationMeta('note');
+  @override
+  late final GeneratedColumn<String> note = GeneratedColumn<String>(
+    'note',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
+  static const VerificationMeta _methodMeta = const VerificationMeta('method');
+  @override
+  late final GeneratedColumn<String> method = GeneratedColumn<String>(
+    'method',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('Other'),
+  );
+  static const VerificationMeta _upiRefMeta = const VerificationMeta('upiRef');
+  @override
+  late final GeneratedColumn<String> upiRef = GeneratedColumn<String>(
+    'upi_ref',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _sourceMeta = const VerificationMeta('source');
+  @override
+  late final GeneratedColumn<String> source = GeneratedColumn<String>(
+    'source',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('manual'),
+  );
+  static const VerificationMeta _directionMeta = const VerificationMeta(
+    'direction',
+  );
+  @override
+  late final GeneratedColumn<String> direction = GeneratedColumn<String>(
+    'direction',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('paid'),
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    amountPaise,
+    paidAt,
+    payee,
+    category,
+    note,
+    method,
+    upiRef,
+    source,
+    direction,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'expenses';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<Expense> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('amount_paise')) {
+      context.handle(
+        _amountPaiseMeta,
+        amountPaise.isAcceptableOrUnknown(
+          data['amount_paise']!,
+          _amountPaiseMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_amountPaiseMeta);
+    }
+    if (data.containsKey('paid_at')) {
+      context.handle(
+        _paidAtMeta,
+        paidAt.isAcceptableOrUnknown(data['paid_at']!, _paidAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_paidAtMeta);
+    }
+    if (data.containsKey('payee')) {
+      context.handle(
+        _payeeMeta,
+        payee.isAcceptableOrUnknown(data['payee']!, _payeeMeta),
+      );
+    }
+    if (data.containsKey('category')) {
+      context.handle(
+        _categoryMeta,
+        category.isAcceptableOrUnknown(data['category']!, _categoryMeta),
+      );
+    }
+    if (data.containsKey('note')) {
+      context.handle(
+        _noteMeta,
+        note.isAcceptableOrUnknown(data['note']!, _noteMeta),
+      );
+    }
+    if (data.containsKey('method')) {
+      context.handle(
+        _methodMeta,
+        method.isAcceptableOrUnknown(data['method']!, _methodMeta),
+      );
+    }
+    if (data.containsKey('upi_ref')) {
+      context.handle(
+        _upiRefMeta,
+        upiRef.isAcceptableOrUnknown(data['upi_ref']!, _upiRefMeta),
+      );
+    }
+    if (data.containsKey('source')) {
+      context.handle(
+        _sourceMeta,
+        source.isAcceptableOrUnknown(data['source']!, _sourceMeta),
+      );
+    }
+    if (data.containsKey('direction')) {
+      context.handle(
+        _directionMeta,
+        direction.isAcceptableOrUnknown(data['direction']!, _directionMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  Expense map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return Expense(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      amountPaise: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}amount_paise'],
+      )!,
+      paidAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}paid_at'],
+      )!,
+      payee: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}payee'],
+      )!,
+      category: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}category'],
+      )!,
+      note: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}note'],
+      )!,
+      method: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}method'],
+      )!,
+      upiRef: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}upi_ref'],
+      ),
+      source: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source'],
+      )!,
+      direction: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}direction'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $ExpensesTable createAlias(String alias) {
+    return $ExpensesTable(attachedDatabase, alias);
+  }
+}
+
+class Expense extends DataClass implements Insertable<Expense> {
+  final int id;
+
+  /// Money is stored in paise (integer) to avoid floating-point errors.
+  final int amountPaise;
+  final DateTime paidAt;
+  final String payee;
+  final String category;
+  final String note;
+  final String method;
+
+  /// UPI reference; null for manual or cash payments.
+  final String? upiRef;
+
+  /// Where the row came from: 'manual' or 'screenshot'.
+  final String source;
+
+  /// 'paid' (money went out) or 'received' (money came in).
+  final String direction;
+  final DateTime createdAt;
+  const Expense({
+    required this.id,
+    required this.amountPaise,
+    required this.paidAt,
+    required this.payee,
+    required this.category,
+    required this.note,
+    required this.method,
+    this.upiRef,
+    required this.source,
+    required this.direction,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['amount_paise'] = Variable<int>(amountPaise);
+    map['paid_at'] = Variable<DateTime>(paidAt);
+    map['payee'] = Variable<String>(payee);
+    map['category'] = Variable<String>(category);
+    map['note'] = Variable<String>(note);
+    map['method'] = Variable<String>(method);
+    if (!nullToAbsent || upiRef != null) {
+      map['upi_ref'] = Variable<String>(upiRef);
+    }
+    map['source'] = Variable<String>(source);
+    map['direction'] = Variable<String>(direction);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  ExpensesCompanion toCompanion(bool nullToAbsent) {
+    return ExpensesCompanion(
+      id: Value(id),
+      amountPaise: Value(amountPaise),
+      paidAt: Value(paidAt),
+      payee: Value(payee),
+      category: Value(category),
+      note: Value(note),
+      method: Value(method),
+      upiRef: upiRef == null && nullToAbsent
+          ? const Value.absent()
+          : Value(upiRef),
+      source: Value(source),
+      direction: Value(direction),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory Expense.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return Expense(
+      id: serializer.fromJson<int>(json['id']),
+      amountPaise: serializer.fromJson<int>(json['amountPaise']),
+      paidAt: serializer.fromJson<DateTime>(json['paidAt']),
+      payee: serializer.fromJson<String>(json['payee']),
+      category: serializer.fromJson<String>(json['category']),
+      note: serializer.fromJson<String>(json['note']),
+      method: serializer.fromJson<String>(json['method']),
+      upiRef: serializer.fromJson<String?>(json['upiRef']),
+      source: serializer.fromJson<String>(json['source']),
+      direction: serializer.fromJson<String>(json['direction']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'amountPaise': serializer.toJson<int>(amountPaise),
+      'paidAt': serializer.toJson<DateTime>(paidAt),
+      'payee': serializer.toJson<String>(payee),
+      'category': serializer.toJson<String>(category),
+      'note': serializer.toJson<String>(note),
+      'method': serializer.toJson<String>(method),
+      'upiRef': serializer.toJson<String?>(upiRef),
+      'source': serializer.toJson<String>(source),
+      'direction': serializer.toJson<String>(direction),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  Expense copyWith({
+    int? id,
+    int? amountPaise,
+    DateTime? paidAt,
+    String? payee,
+    String? category,
+    String? note,
+    String? method,
+    Value<String?> upiRef = const Value.absent(),
+    String? source,
+    String? direction,
+    DateTime? createdAt,
+  }) => Expense(
+    id: id ?? this.id,
+    amountPaise: amountPaise ?? this.amountPaise,
+    paidAt: paidAt ?? this.paidAt,
+    payee: payee ?? this.payee,
+    category: category ?? this.category,
+    note: note ?? this.note,
+    method: method ?? this.method,
+    upiRef: upiRef.present ? upiRef.value : this.upiRef,
+    source: source ?? this.source,
+    direction: direction ?? this.direction,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  Expense copyWithCompanion(ExpensesCompanion data) {
+    return Expense(
+      id: data.id.present ? data.id.value : this.id,
+      amountPaise: data.amountPaise.present
+          ? data.amountPaise.value
+          : this.amountPaise,
+      paidAt: data.paidAt.present ? data.paidAt.value : this.paidAt,
+      payee: data.payee.present ? data.payee.value : this.payee,
+      category: data.category.present ? data.category.value : this.category,
+      note: data.note.present ? data.note.value : this.note,
+      method: data.method.present ? data.method.value : this.method,
+      upiRef: data.upiRef.present ? data.upiRef.value : this.upiRef,
+      source: data.source.present ? data.source.value : this.source,
+      direction: data.direction.present ? data.direction.value : this.direction,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('Expense(')
+          ..write('id: $id, ')
+          ..write('amountPaise: $amountPaise, ')
+          ..write('paidAt: $paidAt, ')
+          ..write('payee: $payee, ')
+          ..write('category: $category, ')
+          ..write('note: $note, ')
+          ..write('method: $method, ')
+          ..write('upiRef: $upiRef, ')
+          ..write('source: $source, ')
+          ..write('direction: $direction, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    amountPaise,
+    paidAt,
+    payee,
+    category,
+    note,
+    method,
+    upiRef,
+    source,
+    direction,
+    createdAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Expense &&
+          other.id == this.id &&
+          other.amountPaise == this.amountPaise &&
+          other.paidAt == this.paidAt &&
+          other.payee == this.payee &&
+          other.category == this.category &&
+          other.note == this.note &&
+          other.method == this.method &&
+          other.upiRef == this.upiRef &&
+          other.source == this.source &&
+          other.direction == this.direction &&
+          other.createdAt == this.createdAt);
+}
+
+class ExpensesCompanion extends UpdateCompanion<Expense> {
+  final Value<int> id;
+  final Value<int> amountPaise;
+  final Value<DateTime> paidAt;
+  final Value<String> payee;
+  final Value<String> category;
+  final Value<String> note;
+  final Value<String> method;
+  final Value<String?> upiRef;
+  final Value<String> source;
+  final Value<String> direction;
+  final Value<DateTime> createdAt;
+  const ExpensesCompanion({
+    this.id = const Value.absent(),
+    this.amountPaise = const Value.absent(),
+    this.paidAt = const Value.absent(),
+    this.payee = const Value.absent(),
+    this.category = const Value.absent(),
+    this.note = const Value.absent(),
+    this.method = const Value.absent(),
+    this.upiRef = const Value.absent(),
+    this.source = const Value.absent(),
+    this.direction = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  });
+  ExpensesCompanion.insert({
+    this.id = const Value.absent(),
+    required int amountPaise,
+    required DateTime paidAt,
+    this.payee = const Value.absent(),
+    this.category = const Value.absent(),
+    this.note = const Value.absent(),
+    this.method = const Value.absent(),
+    this.upiRef = const Value.absent(),
+    this.source = const Value.absent(),
+    this.direction = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  }) : amountPaise = Value(amountPaise),
+       paidAt = Value(paidAt);
+  static Insertable<Expense> custom({
+    Expression<int>? id,
+    Expression<int>? amountPaise,
+    Expression<DateTime>? paidAt,
+    Expression<String>? payee,
+    Expression<String>? category,
+    Expression<String>? note,
+    Expression<String>? method,
+    Expression<String>? upiRef,
+    Expression<String>? source,
+    Expression<String>? direction,
+    Expression<DateTime>? createdAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (amountPaise != null) 'amount_paise': amountPaise,
+      if (paidAt != null) 'paid_at': paidAt,
+      if (payee != null) 'payee': payee,
+      if (category != null) 'category': category,
+      if (note != null) 'note': note,
+      if (method != null) 'method': method,
+      if (upiRef != null) 'upi_ref': upiRef,
+      if (source != null) 'source': source,
+      if (direction != null) 'direction': direction,
+      if (createdAt != null) 'created_at': createdAt,
+    });
+  }
+
+  ExpensesCompanion copyWith({
+    Value<int>? id,
+    Value<int>? amountPaise,
+    Value<DateTime>? paidAt,
+    Value<String>? payee,
+    Value<String>? category,
+    Value<String>? note,
+    Value<String>? method,
+    Value<String?>? upiRef,
+    Value<String>? source,
+    Value<String>? direction,
+    Value<DateTime>? createdAt,
+  }) {
+    return ExpensesCompanion(
+      id: id ?? this.id,
+      amountPaise: amountPaise ?? this.amountPaise,
+      paidAt: paidAt ?? this.paidAt,
+      payee: payee ?? this.payee,
+      category: category ?? this.category,
+      note: note ?? this.note,
+      method: method ?? this.method,
+      upiRef: upiRef ?? this.upiRef,
+      source: source ?? this.source,
+      direction: direction ?? this.direction,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (amountPaise.present) {
+      map['amount_paise'] = Variable<int>(amountPaise.value);
+    }
+    if (paidAt.present) {
+      map['paid_at'] = Variable<DateTime>(paidAt.value);
+    }
+    if (payee.present) {
+      map['payee'] = Variable<String>(payee.value);
+    }
+    if (category.present) {
+      map['category'] = Variable<String>(category.value);
+    }
+    if (note.present) {
+      map['note'] = Variable<String>(note.value);
+    }
+    if (method.present) {
+      map['method'] = Variable<String>(method.value);
+    }
+    if (upiRef.present) {
+      map['upi_ref'] = Variable<String>(upiRef.value);
+    }
+    if (source.present) {
+      map['source'] = Variable<String>(source.value);
+    }
+    if (direction.present) {
+      map['direction'] = Variable<String>(direction.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ExpensesCompanion(')
+          ..write('id: $id, ')
+          ..write('amountPaise: $amountPaise, ')
+          ..write('paidAt: $paidAt, ')
+          ..write('payee: $payee, ')
+          ..write('category: $category, ')
+          ..write('note: $note, ')
+          ..write('method: $method, ')
+          ..write('upiRef: $upiRef, ')
+          ..write('source: $source, ')
+          ..write('direction: $direction, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -2288,6 +2921,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     this,
   );
   late final $ContactsTable contacts = $ContactsTable(this);
+  late final $ExpensesTable expenses = $ExpensesTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -2298,6 +2932,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     extensions,
     extensionRecords,
     contacts,
+    expenses,
   ];
 }
 
@@ -3701,6 +4336,310 @@ typedef $$ContactsTableProcessedTableManager =
       SavedContact,
       PrefetchHooks Function()
     >;
+typedef $$ExpensesTableCreateCompanionBuilder =
+    ExpensesCompanion Function({
+      Value<int> id,
+      required int amountPaise,
+      required DateTime paidAt,
+      Value<String> payee,
+      Value<String> category,
+      Value<String> note,
+      Value<String> method,
+      Value<String?> upiRef,
+      Value<String> source,
+      Value<String> direction,
+      Value<DateTime> createdAt,
+    });
+typedef $$ExpensesTableUpdateCompanionBuilder =
+    ExpensesCompanion Function({
+      Value<int> id,
+      Value<int> amountPaise,
+      Value<DateTime> paidAt,
+      Value<String> payee,
+      Value<String> category,
+      Value<String> note,
+      Value<String> method,
+      Value<String?> upiRef,
+      Value<String> source,
+      Value<String> direction,
+      Value<DateTime> createdAt,
+    });
+
+class $$ExpensesTableFilterComposer
+    extends Composer<_$AppDatabase, $ExpensesTable> {
+  $$ExpensesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get amountPaise => $composableBuilder(
+    column: $table.amountPaise,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get paidAt => $composableBuilder(
+    column: $table.paidAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get payee => $composableBuilder(
+    column: $table.payee,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get category => $composableBuilder(
+    column: $table.category,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get note => $composableBuilder(
+    column: $table.note,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get method => $composableBuilder(
+    column: $table.method,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get upiRef => $composableBuilder(
+    column: $table.upiRef,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get source => $composableBuilder(
+    column: $table.source,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get direction => $composableBuilder(
+    column: $table.direction,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$ExpensesTableOrderingComposer
+    extends Composer<_$AppDatabase, $ExpensesTable> {
+  $$ExpensesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get amountPaise => $composableBuilder(
+    column: $table.amountPaise,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get paidAt => $composableBuilder(
+    column: $table.paidAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get payee => $composableBuilder(
+    column: $table.payee,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get category => $composableBuilder(
+    column: $table.category,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get note => $composableBuilder(
+    column: $table.note,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get method => $composableBuilder(
+    column: $table.method,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get upiRef => $composableBuilder(
+    column: $table.upiRef,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get source => $composableBuilder(
+    column: $table.source,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get direction => $composableBuilder(
+    column: $table.direction,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$ExpensesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ExpensesTable> {
+  $$ExpensesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get amountPaise => $composableBuilder(
+    column: $table.amountPaise,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get paidAt =>
+      $composableBuilder(column: $table.paidAt, builder: (column) => column);
+
+  GeneratedColumn<String> get payee =>
+      $composableBuilder(column: $table.payee, builder: (column) => column);
+
+  GeneratedColumn<String> get category =>
+      $composableBuilder(column: $table.category, builder: (column) => column);
+
+  GeneratedColumn<String> get note =>
+      $composableBuilder(column: $table.note, builder: (column) => column);
+
+  GeneratedColumn<String> get method =>
+      $composableBuilder(column: $table.method, builder: (column) => column);
+
+  GeneratedColumn<String> get upiRef =>
+      $composableBuilder(column: $table.upiRef, builder: (column) => column);
+
+  GeneratedColumn<String> get source =>
+      $composableBuilder(column: $table.source, builder: (column) => column);
+
+  GeneratedColumn<String> get direction =>
+      $composableBuilder(column: $table.direction, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+}
+
+class $$ExpensesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ExpensesTable,
+          Expense,
+          $$ExpensesTableFilterComposer,
+          $$ExpensesTableOrderingComposer,
+          $$ExpensesTableAnnotationComposer,
+          $$ExpensesTableCreateCompanionBuilder,
+          $$ExpensesTableUpdateCompanionBuilder,
+          (Expense, BaseReferences<_$AppDatabase, $ExpensesTable, Expense>),
+          Expense,
+          PrefetchHooks Function()
+        > {
+  $$ExpensesTableTableManager(_$AppDatabase db, $ExpensesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ExpensesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ExpensesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ExpensesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> amountPaise = const Value.absent(),
+                Value<DateTime> paidAt = const Value.absent(),
+                Value<String> payee = const Value.absent(),
+                Value<String> category = const Value.absent(),
+                Value<String> note = const Value.absent(),
+                Value<String> method = const Value.absent(),
+                Value<String?> upiRef = const Value.absent(),
+                Value<String> source = const Value.absent(),
+                Value<String> direction = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+              }) => ExpensesCompanion(
+                id: id,
+                amountPaise: amountPaise,
+                paidAt: paidAt,
+                payee: payee,
+                category: category,
+                note: note,
+                method: method,
+                upiRef: upiRef,
+                source: source,
+                direction: direction,
+                createdAt: createdAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required int amountPaise,
+                required DateTime paidAt,
+                Value<String> payee = const Value.absent(),
+                Value<String> category = const Value.absent(),
+                Value<String> note = const Value.absent(),
+                Value<String> method = const Value.absent(),
+                Value<String?> upiRef = const Value.absent(),
+                Value<String> source = const Value.absent(),
+                Value<String> direction = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+              }) => ExpensesCompanion.insert(
+                id: id,
+                amountPaise: amountPaise,
+                paidAt: paidAt,
+                payee: payee,
+                category: category,
+                note: note,
+                method: method,
+                upiRef: upiRef,
+                source: source,
+                direction: direction,
+                createdAt: createdAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$ExpensesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ExpensesTable,
+      Expense,
+      $$ExpensesTableFilterComposer,
+      $$ExpensesTableOrderingComposer,
+      $$ExpensesTableAnnotationComposer,
+      $$ExpensesTableCreateCompanionBuilder,
+      $$ExpensesTableUpdateCompanionBuilder,
+      (Expense, BaseReferences<_$AppDatabase, $ExpensesTable, Expense>),
+      Expense,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -3715,4 +4654,6 @@ class $AppDatabaseManager {
       $$ExtensionRecordsTableTableManager(_db, _db.extensionRecords);
   $$ContactsTableTableManager get contacts =>
       $$ContactsTableTableManager(_db, _db.contacts);
+  $$ExpensesTableTableManager get expenses =>
+      $$ExpensesTableTableManager(_db, _db.expenses);
 }

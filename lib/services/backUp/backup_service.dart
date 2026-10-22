@@ -10,6 +10,7 @@ import 'package:flutter/foundation.dart';
 import 'package:taskflow/data/app_database.dart';
 import 'package:taskflow/models/todo_task.dart';
 import 'contacts_backup.dart';
+import 'expenses_backup.dart'; // SPEND
 import 'package:taskflow/services/notification_service.dart';
 import 'restore_extension_records.dart';
 import 'package:taskflow/services/todo_refresh_bus.dart';
@@ -30,6 +31,7 @@ class RestoreResult {
     required this.subtasks,
     required this.contacts,
     required this.otherItems,
+    this.expenses = 0, // SPEND
     required this.skipped,
   });
 
@@ -37,6 +39,9 @@ class RestoreResult {
   final int subtasks;
   final int contacts;
   final int otherItems;
+
+  /// Payments added from the file (SPEND).
+  final int expenses;
 
   /// Entries in the file that couldn't be used (missing id/title, a
   /// subtask whose task isn't in the file, ...).
@@ -47,6 +52,8 @@ class RestoreResult {
       if (tasks > 0) '$tasks ${tasks == 1 ? 'task' : 'tasks'}',
       if (subtasks > 0) '$subtasks ${subtasks == 1 ? 'subtask' : 'subtasks'}',
       if (contacts > 0) '$contacts ${contacts == 1 ? 'contact' : 'contacts'}',
+      if (expenses > 0)
+        '$expenses ${expenses == 1 ? 'payment' : 'payments'}', // SPEND
       if (otherItems > 0)
         '$otherItems other ${otherItems == 1 ? 'item' : 'items'}',
     ];
@@ -57,26 +64,30 @@ class RestoreResult {
   }
 }
 
-/// Backs up and restores tasks (with subtasks) and contacts, plus any
-/// other extension records, as one .zip holding taskflow_backup.json.
+/// Backs up and restores tasks (with subtasks), contacts and payments,
+/// plus any other extension records, as one .zip holding
+/// taskflow_backup.json.
 ///
 /// Works on bytes only — [createBackup] returns the zip's bytes and
 /// [restore] takes them — so it doesn't care how the file gets saved,
 /// shared or picked; keep using whatever the Settings backup card
 /// already does for that part.
 ///
-/// File format (backupFormatVersion 2; version 1 files still restore):
+/// File format (backupFormatVersion 3; versions 1 and 2 still restore):
 /// {
-///   "app": "taskflow", "backupFormatVersion": 2, "exportedAt": ISO-8601,
+///   "app": "taskflow", "backupFormatVersion": 3, "exportedAt": ISO-8601,
 ///   "todos":    [ {id,title,category,priority,dueDate,endDate,isDone,
 ///                  notificationEnabled,alarmEnabled} ],   // dates = ms
 ///   "subtasks": [ {todoId,title,isDone} ],
 ///   "contacts": [ {firstName,secondName,number,createdAt} ],
+///   "expenses": [ {amountPaise,paidAt,payee,category,note,method,upiRef,
+///                  source,direction,createdAt} ],          // no ids
 ///   "extensionRecords": [ {extensionType,payload} ]       // not contacts
 /// }
 ///
 /// Restore MERGES into what's on the phone: a task in the file replaces
-/// the task with the same id, everything else already on the phone is
+/// the task with the same id, a payment already on the phone is never
+/// overwritten or duplicated, and everything else already on the phone is
 /// left alone. The database part is one transaction, so a failure
 /// part-way changes nothing.
 class BackupService {
@@ -84,7 +95,7 @@ class BackupService {
 
   static const fileName = 'taskflow_backup.zip';
   static const _jsonName = 'taskflow_backup.json';
-  static const _formatVersion = 2;
+  static const _formatVersion = 3; // SPEND
 
   // ---------------------------------------------------------------- export
 
@@ -133,6 +144,7 @@ class BackupService {
       'todos': todos,
       'subtasks': subtasks,
       'contacts': await exportContacts(),
+      'expenses': await exportExpenses(), // SPEND
       'extensionRecords': otherRecords,
     });
 
@@ -160,6 +172,7 @@ class BackupService {
     }
     if (!data.containsKey('todos') &&
         !data.containsKey('contacts') &&
+        !data.containsKey('expenses') && // SPEND
         !data.containsKey('extensionRecords')) {
       throw BackupException("That file doesn't look like a TaskFlow backup.");
     }
@@ -169,6 +182,7 @@ class BackupService {
     var subtaskCount = 0;
     var skipped = 0;
     var contactCount = 0;
+    var expenseCount = 0; // SPEND
     var otherCount = 0;
     final restoredIds = <String>{};
 
@@ -235,6 +249,7 @@ class BackupService {
         skipped += subtaskEntries.length - attached;
 
         contactCount = await restoreContacts(data);
+        expenseCount = await restoreExpenses(data['expenses']); // SPEND
         otherCount = await restoreExtensionRecords(data['extensionRecords']);
       });
     } catch (e) {
@@ -257,6 +272,7 @@ class BackupService {
       tasks: taskCount,
       subtasks: subtaskCount,
       contacts: contactCount,
+      expenses: expenseCount, // SPEND
       otherItems: otherCount,
       skipped: skipped,
     );

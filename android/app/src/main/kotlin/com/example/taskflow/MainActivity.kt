@@ -2,7 +2,6 @@
 package com.example.taskflow
 
 import android.content.ContentValues
-import android.content.Context
 import android.content.Intent
 import android.media.AudioAttributes
 import android.media.MediaPlayer
@@ -10,17 +9,22 @@ import android.media.Ringtone
 import android.media.RingtoneManager
 import android.net.Uri
 import android.os.Build
+import android.os.Bundle
 import android.os.Environment
+import android.os.Handler
+import android.os.Looper
 import android.provider.MediaStore
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 import java.io.File
 import java.io.FileNotFoundException
+import java.util.concurrent.Executors
 
 /**
- * Backs the "taskflow/ringtone" MethodChannel used by
- * lib/services/alarm_sound_service.dart. Calls:
+ * Hosts two MethodChannels:
+ *
+ * 1. "taskflow/ringtone" — used by lib/services/alarm_sound_service.dart.
  *   import(path, name)  -> copies a picked audio file into the
  *                           Alarms/TaskFlow MediaStore collection and
  *                           returns its content:// uri (as a String).
@@ -36,13 +40,23 @@ import java.io.FileNotFoundException
  *   stopPreview()         -> stops whatever preview is currently playing.
  *   pickSystemRingtone()  -> opens the phone's own ringtone picker.
  *
- * Using MediaStore.Audio (scoped storage, Android 10/API 29+) rather than
- * raw file paths is what lets a plain notification channel's `sound`
- * point at a user-uploaded file at all — a channel can only play a sound
- * the system's media framework can resolve a Uri for, and a file sitting
- * in this app's private storage doesn't qualify.
+ *   Using MediaStore.Audio (scoped storage, Android 10/API 29+) rather
+ *   than raw file paths is what lets a plain notification channel's
+ *   `sound` point at a user-uploaded file at all — a channel can only
+ *   play a sound the system's media framework can resolve a Uri for, and
+ *   a file sitting in this app's private storage doesn't qualify.
+ *
+ * 2. "taskflow/share" — used by lib/services/shared_image_service.dart.
+ *   Payment apps (GPay, PhonePe...) share a receipt image to TaskFlow.
+ *   The image is copied into the app cache on a background thread and
+ *   its path is sent to Dart. Startup is a handshake so nothing is lost:
+ *   Dart registers its handler, then calls ready(); ready() returns a
+ *   share that was waiting (the one that launched the app), and from
+ *   then on new shares are pushed with "sharedImage". A path of "" means
+ *   a share arrived but couldn't be read.
  */
 class MainActivity : FlutterActivity() {
+    // ---- Alarm sounds (Dart: alarm_sound_service.dart) ----
     private val channelName = "taskflow/ringtone"
     private var previewPlayer: MediaPlayer? = null
 
@@ -54,8 +68,23 @@ class MainActivity : FlutterActivity() {
     private var pendingRingtoneResult: MethodChannel.Result? = null
     private val ringtonePickerRequestCode = 4201
 
+    // ---- Shared payment screenshots (Dart: shared_image_service.dart) ----
+    private val shareChannelName = "taskflow/share"
+    private var shareChannel: MethodChannel? = null
+
+    private val ioExecutor = Executors.newSingleThreadExecutor()
+    private val mainHandler = Handler(Looper.getMainLooper())
+
+    // True once Dart has registered its handler and sent ready().
+    private var dartReady = false
+
+    // A share that arrived before Dart was ready. "" = it couldn't be read.
+    private var stashedShare: String? = null
+
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        dartReady = false
+
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, channelName)
             .setMethodCallHandler { call, result ->
                 when (call.method) {
@@ -132,7 +161,118 @@ class MainActivity : FlutterActivity() {
                     else -> result.notImplemented()
                 }
             }
+
+        shareChannel = MethodChannel(
+            flutterEngine.dartExecutor.binaryMessenger,
+            shareChannelName
+        ).also { channel ->
+            channel.setMethodCallHandler { call, result ->
+                when (call.method) {
+                    // Dart is listening: hand over a share that was waiting
+                    // (if any) and start pushing new ones directly.
+                    "ready" -> {
+                        dartReady = true
+                        val waiting = stashedShare
+                        stashedShare = null
+                        result.success(waiting)
+                    }
+
+                    else -> result.notImplemented()
+                }
+            }
+        }
     }
+
+    // ------------------------------------------------------------------
+    // Shared payment screenshots
+    // ------------------------------------------------------------------
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        // Only on a real launch: when the activity is re-created (rotation,
+        // process restore) Android hands back the original share intent,
+        // and importing it again would save the same screenshot twice.
+        if (savedInstanceState == null) handleShare(intent)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleShare(intent)
+    }
+
+    /**
+     * Cheap checks on the main thread; the actual copy (which can be slow
+     * for a big image or a cloud-backed gallery) runs off it.
+     */
+    private fun handleShare(intent: Intent?) {
+        if (intent == null || intent.action != Intent.ACTION_SEND) return
+        // Opening the app from the recents list re-delivers the old share
+        // intent — that isn't a new share.
+        if ((intent.flags and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY) != 0) return
+        val type = intent.type ?: return
+        if (!type.startsWith("image/")) return
+
+        val uri: Uri = (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            intent.getParcelableExtra(Intent.EXTRA_STREAM, Uri::class.java)
+        } else {
+            @Suppress("DEPRECATION")
+            intent.getParcelableExtra<Uri>(Intent.EXTRA_STREAM)
+        }) ?: return
+
+        ioExecutor.execute {
+            deleteOldSharedFiles()
+            val path = copyToCache(uri, type) ?: "" // "" = failed
+            mainHandler.post { deliverShare(path) }
+        }
+    }
+
+    /** Main thread. Push to Dart if it's listening, otherwise hold it. */
+    private fun deliverShare(path: String) {
+        if (dartReady) {
+            shareChannel?.invokeMethod("sharedImage", path)
+        } else {
+            stashedShare = path
+        }
+    }
+
+    /**
+     * Copies the shared content:// image into the app's cache (a uri from
+     * another app can't be read by file path) and returns the file's
+     * path; null on any failure.
+     */
+    private fun copyToCache(uri: Uri, type: String): String? {
+        return try {
+            val extension = when (type) {
+                "image/png" -> "png"
+                "image/webp" -> "webp"
+                else -> "jpg"
+            }
+            val target = File(
+                cacheDir,
+                "shared_payment_${System.currentTimeMillis()}.$extension"
+            )
+            val input = contentResolver.openInputStream(uri) ?: return null
+            input.use { source ->
+                target.outputStream().use { out -> source.copyTo(out) }
+            }
+            target.absolutePath
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    /** Receipts older than a day are never needed again. */
+    private fun deleteOldSharedFiles() {
+        val cutoff = System.currentTimeMillis() - 24L * 60 * 60 * 1000
+        cacheDir.listFiles { f ->
+            f.name.startsWith("shared_payment_") && f.lastModified() < cutoff
+        }?.forEach { it.delete() }
+    }
+
+    // ------------------------------------------------------------------
+    // Alarm sounds
+    // ------------------------------------------------------------------
 
     /**
      * True if [uriString] still resolves to something that can be opened.
@@ -159,6 +299,8 @@ class MainActivity : FlutterActivity() {
      * MediaStore's alarms collection, marked IS_ALARM so it shows up as
      * a valid alarm/notification sound, under Alarms/TaskFlow so it's
      * easy for the user to find/remove by hand if they ever want to.
+     * If the copy fails part-way, the half-created MediaStore row is
+     * removed instead of being left pending forever.
      */
     private fun importRingtone(sourcePath: String, displayName: String): String {
         val resolver = contentResolver
@@ -169,7 +311,10 @@ class MainActivity : FlutterActivity() {
             put(MediaStore.Audio.Media.IS_NOTIFICATION, 1)
             put(MediaStore.Audio.Media.IS_MUSIC, 0)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                put(MediaStore.Audio.Media.RELATIVE_PATH, "${Environment.DIRECTORY_ALARMS}/TaskFlow")
+                put(
+                    MediaStore.Audio.Media.RELATIVE_PATH,
+                    "${Environment.DIRECTORY_ALARMS}/TaskFlow"
+                )
                 put(MediaStore.Audio.Media.IS_PENDING, 1)
             }
         }
@@ -183,14 +328,23 @@ class MainActivity : FlutterActivity() {
         val itemUri = resolver.insert(collection, values)
             ?: throw FileNotFoundException("Could not create MediaStore entry")
 
-        resolver.openOutputStream(itemUri)?.use { out ->
-            File(sourcePath).inputStream().use { input -> input.copyTo(out) }
-        } ?: throw FileNotFoundException("Could not open output stream for $itemUri")
+        try {
+            resolver.openOutputStream(itemUri)?.use { out ->
+                File(sourcePath).inputStream().use { input -> input.copyTo(out) }
+            } ?: throw FileNotFoundException("Could not open output stream for $itemUri")
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            values.clear()
-            values.put(MediaStore.Audio.Media.IS_PENDING, 0)
-            resolver.update(itemUri, values, null, null)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                values.clear()
+                values.put(MediaStore.Audio.Media.IS_PENDING, 0)
+                resolver.update(itemUri, values, null, null)
+            }
+        } catch (e: Exception) {
+            try {
+                resolver.delete(itemUri, null, null)
+            } catch (_: Exception) {
+                // Nothing more can be done about a row that won't delete.
+            }
+            throw e
         }
 
         return itemUri.toString()
@@ -238,7 +392,17 @@ class MainActivity : FlutterActivity() {
         val pending = pendingRingtoneResult
         pendingRingtoneResult = null
 
-        val uri: Uri? = data?.getParcelableExtra(RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
+        val uri: Uri? = if (data == null) {
+            null
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            data.getParcelableExtra(
+                RingtoneManager.EXTRA_RINGTONE_PICKED_URI,
+                Uri::class.java
+            )
+        } else {
+            @Suppress("DEPRECATION")
+            data.getParcelableExtra<Uri>(RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
+        }
         if (uri == null) {
             // Cancelled, or the person picked "Silent"/"None" — either
             // way there's nothing to switch to, so this is a no-op, not
@@ -258,21 +422,36 @@ class MainActivity : FlutterActivity() {
         pending?.success(mapOf("uri" to uri.toString(), "name" to name))
     }
 
+    /**
+     * Plays a short preview on the alarm stream. prepareAsync() so a big
+     * or slow file can't freeze the UI while it loads; a playback error
+     * after that just stops the preview.
+     */
     private fun playPreview(uriString: String) {
         stopPreview()
         val player = MediaPlayer()
-        player.setAudioAttributes(
-            AudioAttributes.Builder()
-                .setUsage(AudioAttributes.USAGE_ALARM)
-                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                .build()
-        )
-        player.setDataSource(this, Uri.parse(uriString))
-        player.setOnCompletionListener { stopPreview() }
-        player.isLooping = false
-        player.prepare()
-        player.start()
-        previewPlayer = player
+        try {
+            player.setAudioAttributes(
+                AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_ALARM)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                    .build()
+            )
+            player.setDataSource(this, Uri.parse(uriString))
+            player.setOnCompletionListener { stopPreview() }
+            player.setOnErrorListener { _, _, _ ->
+                stopPreview()
+                true
+            }
+            player.setOnPreparedListener { it.start() }
+            player.isLooping = false
+            previewPlayer = player
+            player.prepareAsync()
+        } catch (e: Exception) {
+            previewPlayer = null
+            player.release()
+            throw e
+        }
     }
 
     private fun stopPreview() {
@@ -280,7 +459,8 @@ class MainActivity : FlutterActivity() {
             try {
                 if (it.isPlaying) it.stop()
             } catch (_: Exception) {
-                // Already stopped/released — nothing to clean up.
+                // Already stopped/released or not prepared yet — nothing
+                // to clean up beyond the release below.
             }
             it.release()
         }
@@ -289,6 +469,7 @@ class MainActivity : FlutterActivity() {
 
     override fun onDestroy() {
         stopPreview()
+        ioExecutor.shutdown()
         super.onDestroy()
     }
 }

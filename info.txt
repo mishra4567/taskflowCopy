@@ -29,15 +29,6 @@ Repo: https://github.com/mishra4567/taskflowCopy
     slidePageRoute. (Note: that _RowSpec entry can no longer be const,
     since its onTap closure captures `context`.)
 
-REQUIRED DEPENDENCY (not yet in pubspec.yaml):
-    shared_preferences: ^2.2.0
-REQUIRED main.dart CHANGE:
-    void main() async {
-      WidgetsFlutterBinding.ensureInitialized();
-      await DevModeService.instance.load();
-      runApp(const MyApp());
-    }
-
 3. TODO SCREEN MOVED INTO THE SHELL (bottom nav now visible on it)
 -------------------------------------------------------------------
 - lib/screens/todo_screen.dart (MODIFIED)
@@ -167,51 +158,87 @@ bump — the existing column already had room for it.
     declined" or, if permanently denied, "permission is off in
     Settings" with an "Open Settings" action button). Turning OFF never
     requests anything.
-
-REQUIRED DEPENDENCY:
-    permission_handler: ^13.0.2   (latest as of this build; confirmed
-                                   on pub.dev — note v12.0.0 bumped
-                                   compileSdkVersion to 35 as a
-                                   BREAKING CHANGE, so check
-                                   android/app/build.gradle has
-                                   compileSdk = 35 or higher)
-
-ANDROID MANIFEST ADDITIONS NEEDED (android/app/src/main/AndroidManifest.xml,
-inside <manifest>, above <application>) — NOT YET APPLIED, file was
-never shared:
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
-    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
-    <uses-permission android:name="android.permission.USE_EXACT_ALARM"/>
-
-iOS Podfile ADDITION NEEDED (not yet applied, file was never shared) —
-inside the post_install block's GCC_PREPROCESSOR_DEFINITIONS:
-    'PERMISSION_NOTIFICATIONS=1'
-
-IMPORTANT SCOPE NOTE: this only gates the PERMISSION for the two
-switches. No notification or alarm actually fires at task.dueDate yet.
-That would need flutter_local_notifications (notifications) and
-something like android_alarm_manager_plus / native AlarmManager access
-(exact alarms), wired to the due date/time — not built yet.
-
-==================================================================
-FILES STILL NEEDED FROM YOU (not yet seen, blocking follow-up work):
-- extension_manifest.dart / extension_manager.dart — to wire
-  extension-contributed quick-add actions (section 4) and to properly
-  convert Texting Extension from placeholder to a real extension.
-- android/app/src/main/AndroidManifest.xml — to apply permission lines.
-- ios/Podfile — to apply the iOS permission_handler build flag.
-- android/app/build.gradle — to confirm compileSdk >= 35 for
-  permission_handler 12+.
-
-PENDING MANUAL STEPS (pubspec.yaml / main.dart):
-- Add shared_preferences: ^2.2.0
-- Add permission_handler: ^13.0.2
-- Run flutter pub get
-- Update main.dart to await DevModeService.instance.load() before
-  runApp()
-==================================================================
-
       
-
+10. EXPENSES / SPENDING FEATURE
+---------------------------------
+- Expenses table: amountPaise, paidAt, payee, category, note, method,
+  upiRef, direction (Paid/Received, schema v7)
+- ExpenseQueries in data/daos/expense_queries.dart
+- Payment screenshot scan: ML Kit OCR via ReceiptScanner ->
+  PaymentTextParser -> pre-filled confirm sheet
+    - First PhonePe receipt test didn't parse correctly; was being
+      fixed (status of that fix not confirmed in memory)
+    - Release APK build hit R8 missing ML Kit classes; resolved
+      (installs and works) but app opens/loads slowly
+- Planned/built receipt-capture rewrite: split OCR text into parts,
+  match word-by-word against per-app patterns (PhonePe, GPay, Paytm,
+  etc.) stored in capture_payment_pattern.dart
+- receipt_import_flow.dart (importPaymentImage):
+    - Reads a screenshot via receipt_layout.dart / scanReceiptImage
+    - Skips duplicate UPI refs
+    - Auto-saves confident payments with an Edit snackbar
+      (flag: autoSaveConfidentPayments)
+    - Otherwise opens the confirm sheet
+    - Both the Expenses screen's scan button and shared-in images go
+      through this same flow
+- Paid/Received: optional direction field (default Paid); Received
+  entries shown separately from "Spent" totals
+- Single shared expense_sheet.dart used for add/edit — replaced an
+  earlier separate sheet that lived inside spend_screen.dart
+ 
+11. SHARE-TO-TASKFLOW (Android)
+---------------------------------
+- Native side in MainActivity.kt, channel "taskflow/share"
+    - Copies a shared image to cache
+- Dart side: shared_image_service.dart
+- Same MainActivity.kt also owns the "taskflow/ringtone" alarm-sound
+  channel (separate feature, not expense-related)
+- Purpose: sharing a payment screenshot from a payment app opens the
+  add-expense popup directly, auto-saving if the parser is confident,
+  otherwise letting the user fill it in manually
+ 
+12. BACKUP & RESTORE
+----------------------
+- services/backUp/backup_service.dart — bytes-based API:
+    - createBackup() -> returns zip bytes
+    - restore(bytes) -> takes zip bytes back in
+- Zip contains taskflow_backup.json:
+    { app, backupFormatVersion, exportedAt, todos, subtasks, contacts,
+      extensionRecords }
+- Restore behavior (MERGE, not full overwrite):
+    - A task in the file REPLACES an existing task with the same id
+      (upsert, not skip-on-conflict)
+    - Contacts are matched by CONTENT, not id (ExtensionRecords ids
+      are per-install auto-increment, so ids can't be trusted across
+      devices/installs) — matched contacts are inserted fresh
+    - Restore runs as one DB transaction
+    - Reminders for restored tasks are rescheduled AFTER the
+      transaction commits, specifically so a notification-permission
+      problem can't turn a successful restore into a reported failure
+- UI location: moved OUT of Settings into its own page —
+  screens/morescreen/backup_screen.dart — opened from a "Backup" row
+  added to the Archive/Trash Can card under DATA MANAGEMENT on
+  MoreScreen. Old backup_card.dart was removed.
+ 
+13. NOT YET IN MEMORY / WORTH RE-CONFIRMING
+----------------------------------------------
+- Archive/Trash (task_bin_service.dart, archive_trash_service.dart)
+  was built in an earlier session but was explicitly excluded from
+  the last memory update by request — only Backup, Received, and
+  Spending were updated. If Archive/Trash is still active in the
+  codebase, memory doesn't currently reflect its details.
+- The PhonePe receipt parsing fix's outcome isn't confirmed.
+- Exact current schemaVersion and full migration list isn't
+  guaranteed complete here — check app_database.dart directly.
+==================================================================
 // -- Date:- 09.10.2026
       // features added :- alarm sound, BackUp services 
+// -- Date:- 22.10.2026
+      // features added Spending :- 
+                1. Add your spend By manualy
+                2. Add your spend by scanning
+                3. Add your spend by sharing Screenshot by any upi app 
+                4. Money Received & Paid 
+                5. Select Category & Received/Paid 
+                6. View your Spending by full manth 
+                7. Attached with BackUp & Restore 

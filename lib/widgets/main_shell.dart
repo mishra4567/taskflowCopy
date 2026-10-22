@@ -2,10 +2,15 @@
 import 'package:flutter/material.dart';
 import 'package:taskflow/screens/calendar_screen.dart';
 import 'package:taskflow/screens/extension_runner_screen.dart';
+import 'package:taskflow/screens/spendscreen/spend_screen.dart'
+    show ExpensesScreen, registerQuickAddExpense;
 import 'package:taskflow/screens/contactscreen/contact_screen.dart'
     show ContactScreen, registerQuickAddContact;
 import 'package:taskflow/services/archive_trash_service.dart'; // ARCHIVE
-
+import 'package:taskflow/screens/spendscreen/receipt_import_flow.dart';
+import 'package:taskflow/services/spend/shared_image_service.dart';
+import 'package:taskflow/screens/spendscreen/expense_sheet.dart';
+import 'package:taskflow/services/spend/expense_refresh_bus.dart';
 import '../screens/home_screen.dart';
 import '../screens/todoscreen/todo_screen.dart';
 import '../screens/extensions_screen.dart';
@@ -33,6 +38,7 @@ enum _NavPage {
   extensionRunner,
   extensions,
   calendar,
+  spending,
   contacts,
   search,
   more,
@@ -66,20 +72,28 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
   /// OS back button/gesture doesn't know about (see PopScope in build()),
   /// since these pages are swapped via state, not pushed Navigator routes.
   bool get _isTopLevel => _page == _NavPage.home;
+  bool _handlingShare = false;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this); // ARCHIVE
+    SharedImageService.instance.pending.addListener(_onShared);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      SharedImageService.instance.start();
+    });
     // Registers the "Add Contact" quick-add card exactly once for the
     // app's lifetime. Must run before the FAB's sheet can ever be
     // opened — MainShell is the right place since it's what builds the
     // FAB and calls showQuickAddSheet via _onQuickAdd.
     registerQuickAddContact();
+    registerQuickAddExpense();
   }
+
   // ARCHIVE:
   @override
   void dispose() {
+    SharedImageService.instance.pending.removeListener(_onShared);
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -99,6 +113,7 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
     _NavPage.extensionRunner: 'TaskFlow',
     _NavPage.extensions: 'TaskFlow',
     _NavPage.calendar: 'TaskFlow',
+    _NavPage.spending: 'TaskFlow',
     _NavPage.contacts: 'TaskFlow',
     _NavPage.search: 'TaskFlow',
     _NavPage.more: 'TaskFlow',
@@ -173,6 +188,40 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
     onAddRoadmapItem: () => showAppSnackBar(context, 'Add Roadmap Item'),
   );
 
+  Future<void> _onShared() async {
+    if (_handlingShare) return;
+    final shared = SharedImageService.instance.take();
+    if (shared == null || !mounted) return;
+    _handlingShare = true;
+    try {
+      if (shared.failed) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Couldn't read that receipt — add it by hand."),
+          ),
+        );
+        await showExpenseSheet(context, onSaved: ExpenseRefreshBus.notify);
+      } else {
+        await importPaymentImage(context, shared.path!, deleteWhenDone: true);
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Couldn't process that receipt — add it by hand."),
+          ),
+        );
+        await showExpenseSheet(context, onSaved: ExpenseRefreshBus.notify);
+      }
+    } finally {
+      _handlingShare = false;
+    }
+    // A second share may have arrived while this one was open.
+    if (mounted && SharedImageService.instance.pending.value != null) {
+      _onShared();
+    }
+  }
+
   Widget _buildPage(_NavPage page) {
     switch (page) {
       case _NavPage.home:
@@ -180,6 +229,7 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
           onOpenCalendar: () => _selectPage(_NavPage.calendar),
           onOpenTodo: () => _openTodo(),
           onOpenContact: () => _selectPage(_NavPage.contacts),
+          onOpenSpending: () => _selectPage(_NavPage.spending),
           onOpenTesting: _openTesting,
           onOpenExtension: _openExtension,
         );
@@ -204,6 +254,8 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
         return CalendarScreen(
           onViewDateInTodo: (date) => _openTodo(dateFilter: date),
         );
+      case _NavPage.spending:
+        return const ExpensesScreen();
       case _NavPage.contacts:
         return ContactScreen(onBack: () => _selectPage(_previousPage));
       case _NavPage.extensions:
@@ -235,7 +287,9 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
             : AppBar(
                 // main_shell.dart — back arrow now shown on Calendar (and Extensions)
                 leading:
-                    (_page == _NavPage.extensions || _page == _NavPage.calendar)
+                    (_page == _NavPage.extensions ||
+                        _page == _NavPage.calendar ||
+                        _page == _NavPage.spending)
                     ? IconButton(
                         icon: const Icon(Icons.arrow_back),
                         onPressed: () => _selectPage(_previousPage),

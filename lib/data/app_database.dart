@@ -33,6 +33,7 @@ import 'tables/subtasks_table.dart';
 import 'tables/extensions_table.dart';
 import 'tables/extension_records_table.dart';
 import 'tables/contacts_table.dart';
+import 'tables/expenses_table.dart'; // SPEND
 // Imported (not just exported below) because the migration calls
 // migrateLegacyContacts(), an extension method defined in this file.
 import 'daos/contact_queries.dart';
@@ -42,14 +43,23 @@ export 'tables/subtasks_table.dart';
 export 'tables/extensions_table.dart';
 export 'tables/extension_records_table.dart';
 export 'tables/contacts_table.dart';
+export 'tables/expenses_table.dart'; // SPEND
 export 'daos/todo_queries.dart';
 export 'daos/extension_queries.dart';
 export 'daos/contact_queries.dart';
+export 'daos/expense_queries.dart'; // SPEND
 
 part 'app_database.g.dart';
 
 @DriftDatabase(
-  tables: [Todos, Subtasks, Extensions, ExtensionRecords, Contacts],
+  tables: [
+    Todos,
+    Subtasks,
+    Extensions,
+    ExtensionRecords,
+    Contacts,
+    Expenses,
+  ], // SPEND
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase._() : super(_openConnection());
@@ -74,8 +84,9 @@ class AppDatabase extends _$AppDatabase {
   //        version-3 step: a phone that already upgraded to 3 (for
   //        Contacts) never runs that step again, so it would never get
   //        the columns.
+  //   5 -> added the Expenses table (payments / spending).
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 7; // SPEND
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -98,6 +109,18 @@ class AppDatabase extends _$AppDatabase {
         await _addColumnIfMissing(m, todos, todos.completedAt);
         await _addColumnIfMissing(m, todos, todos.archivedAt);
         await _addColumnIfMissing(m, todos, todos.deletedAt);
+      }
+      if (from < 5) {
+        // SPEND
+        await m.createTable(expenses);
+      }
+      if (from < 6) {
+        // SPEND
+        await _addColumnIfMissing(m, expenses, expenses.source);
+      }
+      if (from < 7) {
+        // SPEND
+        await _addColumnIfMissing(m, expenses, expenses.direction);
       }
     },
   );

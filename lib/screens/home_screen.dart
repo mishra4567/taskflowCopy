@@ -17,6 +17,7 @@ class HomeScreen extends StatefulWidget {
     required this.onOpenTodo,
     required this.onOpenTesting,
     required this.onOpenContact,
+    required this.onOpenSpending,
     required this.onOpenExtension,
   });
 
@@ -30,6 +31,7 @@ class HomeScreen extends StatefulWidget {
   final VoidCallback onOpenTodo;
   final VoidCallback onOpenTesting;
   final VoidCallback onOpenContact;
+  final VoidCallback onOpenSpending;
 
   /// Opens the generic extension-runner tab for one installed extension,
   /// identified by its manifest type + display name.
@@ -113,6 +115,14 @@ class _HomeScreenState extends State<HomeScreen> {
           title: 'Contacts',
           subtitle: 'Manage your contacts',
           onTap: widget.onOpenContact,
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        _ModuleCard(
+          icon: Icons.payments_outlined,
+          iconColor: colors.primary,
+          title: 'Spending',
+          subtitle: 'Share And Manage your Spending',
+          onTap: widget.onOpenSpending,
         ),
 
         // Dev-mode-only card for exercising the shell-hosted Testing

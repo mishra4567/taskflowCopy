@@ -42,6 +42,12 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+             <!-- A payment screenshot shared from GPay / PhonePe / Paytm... -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <data android:mimeType="image/*"/>
+            </intent-filter>
         </activity>
 
         <!-- flutter_local_notifications: receives the broadcast fired when
