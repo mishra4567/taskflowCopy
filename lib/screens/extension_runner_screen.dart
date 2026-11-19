@@ -8,16 +8,16 @@ import '../widgets/code_extension_view.dart';
 import '../widgets/slide_page_route.dart';
 import 'extensions_screen.dart';
 
-/// Generic screen for any code-based extension — looks up an installed
-/// extension by type, and either runs its Dart source via CodeExtensionView,
-/// falls back to reading plain JSON via [onData] if it's data-only, or
-/// shows a "not installed" state. Not specific to Contacts; reusable for
-/// any future extension that follows the same manifest shape.
-///
-/// Lives inside MainShell (like TodoScreen/ContactsExtensionScreen)
-/// rather than being pushed over it, so the bottom nav stays visible —
-/// hence `onBack` instead of Navigator.pop, and its own leading arrow
-/// since the shell hides its AppBar for this page.
+// Generic screen for any code-based extension — looks up an installed
+// extension by type, and either runs its Dart source via CodeExtensionView,
+// falls back to reading plain JSON via [onData] if it's data-only, or
+// shows a "not installed" state. Not specific to Contacts; reusable for
+// any future extension that follows the same manifest shape.
+//
+// Lives inside MainShell (like TodoScreen/ContactsExtensionScreen)
+// rather than being pushed over it, so the bottom nav stays visible —
+// hence `onBack` instead of Navigator.pop, and its own leading arrow
+// since the shell hides its AppBar for this page.
 class ExtensionRunnerScreen extends StatefulWidget {
   const ExtensionRunnerScreen({
     super.key,
@@ -31,9 +31,9 @@ class ExtensionRunnerScreen extends StatefulWidget {
   final String title;
   final VoidCallback onBack;
 
-  /// Optional builder for extensions that ship plain JSON instead of
-  /// code — called with the decoded data if the installed extension has
-  /// a dataFile but no codeFile.
+  // Optional builder for extensions that ship plain JSON instead of
+  // code — called with the decoded data if the installed extension has
+  // a dataFile but no codeFile.
   final Widget Function(BuildContext context, dynamic data)? onData;
 
   @override

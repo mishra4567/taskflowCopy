@@ -6,19 +6,19 @@ import 'package:drift/drift.dart' show OrderingTerm, Value;
 import '../app_database.dart';
 
 extension SavedContactX on SavedContact {
-  /// What the list shows as the contact's name: the second name, falling
-  /// back to the first name when the second is blank. Neither is
-  /// guaranteed non-empty, so this can still return ''.
+  // What the list shows as the contact's name: the second name, falling
+  // back to the first name when the second is blank. Neither is
+  // guaranteed non-empty, so this can still return ''.
   String get displayName {
     final second = secondName.trim();
     return second.isNotEmpty ? second : firstName.trim();
   }
 }
 
-/// Contact queries, kept in their own file like TodoQueries.
+// Contact queries, kept in their own file like TodoQueries.
 extension ContactQueries on AppDatabase {
-  /// Live list, oldest first. Emits again on every insert/delete, so a
-  /// screen using it never needs a manual refresh.
+  // Live list, oldest first. Emits again on every insert/delete, so a
+  // screen using it never needs a manual refresh.
   Stream<List<SavedContact>> watchContacts() {
     return (select(contacts)..orderBy([(c) => OrderingTerm.asc(c.id)])).watch();
   }
@@ -49,12 +49,12 @@ extension ContactQueries on AppDatabase {
     return (delete(contacts)..where((c) => c.id.equals(id))).go();
   }
 
-  /// One-time move of contacts that were stored as extension records
-  /// (extensionType 'contacts', JSON payload) into the contacts table.
-  /// Each record is deleted only after its contact was added, so a
-  /// payload that can't be read is left alone instead of lost. Returns
-  /// how many were moved. Safe to run more than once — after the first
-  /// run there is nothing left to move.
+  // One-time move of contacts that were stored as extension records
+  // (extensionType 'contacts', JSON payload) into the contacts table.
+  // Each record is deleted only after its contact was added, so a
+  // payload that can't be read is left alone instead of lost. Returns
+  // how many were moved. Safe to run more than once — after the first
+  // run there is nothing left to move.
   Future<int> migrateLegacyContacts() async {
     final legacy = await (select(
       extensionRecords,

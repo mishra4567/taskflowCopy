@@ -13,12 +13,12 @@ import 'package:taskflow/theme/app_palette.dart';
 import 'package:taskflow/theme/app_tokens.dart';
 import 'package:taskflow/theme/app_typography.dart';
 
-/// Stored in Expenses.direction.
+// Stored in Expenses.direction.
 const directionPaid = 'paid';
 const directionReceived = 'received';
 
-/// Categories offered for money that went out / came in. A category an
-/// older row already has (even one that isn't listed) is still shown.
+// Categories offered for money that went out / came in. A category an
+// older row already has (even one that isn't listed) is still shown.
 const expenseCategories = [
   'Food',
   'Groceries',
@@ -46,19 +46,19 @@ const expenseMethods = [
 const _defaultCategory = 'Other';
 const _defaultMethod = 'Other';
 
-/// Opens the add / edit / confirm sheet.
-///
-/// * Add by hand: call with nothing but the context. [direction] picks
-///   whether it starts on Paid or Received — it can always be switched
-///   inside the sheet, and Paid is the default.
-/// * Edit: pass [existing] (and [onDelete] for the Delete button).
-/// * Screenshot: pass [prefill] from PaymentTextParser (its direction is
-///   used) and `source: 'screenshot'`; [scanText] adds a "Show scanned
-///   text" button. The sheet is the confirm screen, so the person fixes
-///   whatever the scan got wrong before anything is saved.
-///
-/// [onSaved] is optional: the Spending list is a live Drift stream and
-/// refreshes by itself.
+// Opens the add / edit / confirm sheet.
+//
+// * Add by hand: call with nothing but the context. [direction] picks
+//   whether it starts on Paid or Received — it can always be switched
+//   inside the sheet, and Paid is the default.
+// * Edit: pass [existing] (and [onDelete] for the Delete button).
+// * Screenshot: pass [prefill] from PaymentTextParser (its direction is
+//   used) and `source: 'screenshot'`; [scanText] adds a "Show scanned
+//   text" button. The sheet is the confirm screen, so the person fixes
+//   whatever the scan got wrong before anything is saved.
+//
+// [onSaved] is optional: the Spending list is a live Drift stream and
+// refreshes by itself.
 Future<void> showExpenseSheet(
   BuildContext context, {
   Expense? existing,
@@ -721,7 +721,7 @@ class _ExpenseSheetState extends State<_ExpenseSheet> {
   }
 }
 
-/// Selected / unselected chip treatment used across the app.
+// Selected / unselected chip treatment used across the app.
 class _ChoiceChip extends StatelessWidget {
   const _ChoiceChip({
     required this.label,

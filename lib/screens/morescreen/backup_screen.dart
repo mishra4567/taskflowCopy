@@ -8,12 +8,12 @@ import '../../theme/app_palette.dart';
 import '../../theme/app_tokens.dart';
 import '../../theme/app_typography.dart';
 
-/// Backup & restore, as its own page (opened from the Backup row under
-/// Data Management on the More screen).
-///
-/// BackupService only deals in bytes — createBackup returns the zip,
-/// restore takes it — so everything about *files* (the save dialog and
-/// the file picker) lives here.
+// Backup & restore, as its own page (opened from the Backup row under
+// Data Management on the More screen).
+//
+// BackupService only deals in bytes — createBackup returns the zip,
+// restore takes it — so everything about *files* (the save dialog and
+// the file picker) lives here.
 class BackupScreen extends StatefulWidget {
   const BackupScreen({super.key});
 
@@ -25,12 +25,12 @@ class _BackupScreenState extends State<BackupScreen> {
   bool _exporting = false;
   bool _restoring = false;
 
-  /// One at a time: starting a restore in the middle of a backup (or the
-  /// reverse) would have both reading and writing the database at once.
+  // One at a time: starting a restore in the middle of a backup (or the
+  // reverse) would have both reading and writing the database at once.
   bool get _busy => _exporting || _restoring;
 
-  /// e.g. 2026-10-13_1425 — so each backup gets its own file name
-  /// instead of every one being called taskflow_backup.zip.
+  // e.g. 2026-10-13_1425 — so each backup gets its own file name
+  // instead of every one being called taskflow_backup.zip.
   String _stamp() {
     final n = DateTime.now();
     String two(int v) => v.toString().padLeft(2, '0');
@@ -185,9 +185,9 @@ class _BackupScreenState extends State<BackupScreen> {
   }
 }
 
-/// A tappable action row in the same style as the Home module cards: icon
-/// box, title/subtitle, and a spinner in place of the chevron while it's
-/// running. Dims when [onTap] is null because the *other* action is busy.
+// A tappable action row in the same style as the Home module cards: icon
+// box, title/subtitle, and a spinner in place of the chevron while it's
+// running. Dims when [onTap] is null because the *other* action is busy.
 class _ActionCard extends StatelessWidget {
   const _ActionCard({
     required this.icon,

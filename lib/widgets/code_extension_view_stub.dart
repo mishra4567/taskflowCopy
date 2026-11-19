@@ -4,8 +4,8 @@ import '../theme/app_palette.dart';
 import '../theme/app_tokens.dart';
 import '../theme/app_typography.dart';
 
-/// Web fallback — flutter_eval is not bundled on web (avoids release build
-/// issues and keeps the bundle smaller). JSON/data extensions still work.
+// Web fallback — flutter_eval is not bundled on web (avoids release build
+// issues and keeps the bundle smaller). JSON/data extensions still work.
 class CodeExtensionView extends StatelessWidget {
   const CodeExtensionView({
     super.key,

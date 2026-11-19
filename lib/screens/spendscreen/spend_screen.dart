@@ -1,16 +1,16 @@
-/// screens/spendscreen/spend_screen.dart
-///
-/// Expenses: what you've spent and received, by month and by day, backed
-/// by AppDatabase's own `expenses` table. Entries get in three ways:
-/// - typed by hand ("+" in the AppBar, or the quick-add card),
-/// - from a screenshot picked with the scan icon, and
-/// - from a receipt shared into the app from GPay / PhonePe / etc.
-/// Screenshots go through receipt_import_flow.dart, which reads them and
-/// either saves the payment (when sure) or opens the confirm sheet.
-/// The list is a live Drift stream — saving from anywhere updates it.
-///
-/// "Spent" totals count only money that went out (direction 'paid');
-/// money received is shown separately and never reduces what was spent.
+// screens/spendscreen/spend_screen.dart
+//
+// Expenses: what you've spent and received, by month and by day, backed
+// by AppDatabase's own `expenses` table. Entries get in three ways:
+// - typed by hand ("+" in the AppBar, or the quick-add card),
+// - from a screenshot picked with the scan icon, and
+// - from a receipt shared into the app from GPay / PhonePe / etc.
+// Screenshots go through receipt_import_flow.dart, which reads them and
+// either saves the payment (when sure) or opens the confirm sheet.
+// The list is a live Drift stream — saving from anywhere updates it.
+//
+// "Spent" totals count only money that went out (direction 'paid');
+// money received is shown separately and never reduces what was spent.
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
@@ -55,7 +55,7 @@ IconData _categoryIcon(String category) => switch (category) {
   _ => Icons.payments_outlined,
 };
 
-/// Green used for money that came in.
+// Green used for money that came in.
 const _receivedColor = Color(0xFF3DA66B);
 
 class ExpensesScreen extends StatefulWidget {
@@ -84,8 +84,8 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
     setState(() => _month = DateTime(_month.year, _month.month + delta));
   }
 
-  /// Pick a payment screenshot and hand it to the import flow, which reads
-  /// it and either saves it (when sure) or opens the confirm sheet.
+  // Pick a payment screenshot and hand it to the import flow, which reads
+  // it and either saves it (when sure) or opens the confirm sheet.
   Future<void> _scan() async {
     final file = await FilePicker.pickFile(type: FileType.image);
     final path = file?.path;
@@ -281,7 +281,7 @@ class _MonthSwitcher extends StatelessWidget {
   final String label;
   final VoidCallback onPrevious;
 
-  /// Null when already on the current month (no future months).
+  // Null when already on the current month (no future months).
   final VoidCallback? onNext;
 
   @override
@@ -425,8 +425,8 @@ class _DayHeader extends StatelessWidget {
 
   final String label;
 
-  /// What went out that day; nothing is shown for a day with only
-  /// received money.
+  // What went out that day; nothing is shown for a day with only
+  // received money.
   final int spent;
 
   @override
@@ -536,8 +536,8 @@ class _ExpenseTile extends StatelessWidget {
   }
 }
 
-/// Registers "Add Expense" as a quick-add card. Call once, from
-/// MainShell's initState.
+// Registers "Add Expense" as a quick-add card. Call once, from
+// MainShell's initState.
 void registerQuickAddExpense() {
   QuickAddRegistry.register(
     QuickAddAction(

@@ -11,23 +11,23 @@ import 'package:taskflow/theme/app_tokens.dart';
 import 'package:taskflow/theme/app_typography.dart';
 import './todo_task_sheet.dart'; // ← adjust to your sheet's real path
 
-/// TODO List tab — filterable, grouped agenda of tasks with an inline
-/// add/edit sheet. Backed by AppDatabase (Drift/SQLite): the in-memory
-/// `_tasks` list is the UI's working copy for snappy interaction, and
-/// every mutation writes through to the database immediately.
-///
-/// Rendered inside MainShell rather than pushed over it, so the bottom
-/// nav and FAB stay visible; the AppBar here is this screen's own (the
-/// shell hides its bar for this page).
+// TODO List tab — filterable, grouped agenda of tasks with an inline
+// add/edit sheet. Backed by AppDatabase (Drift/SQLite): the in-memory
+// `_tasks` list is the UI's working copy for snappy interaction, and
+// every mutation writes through to the database immediately.
+//
+// Rendered inside MainShell rather than pushed over it, so the bottom
+// nav and FAB stay visible; the AppBar here is this screen's own (the
+// shell hides its bar for this page).
 class TodoScreen extends StatefulWidget {
   const TodoScreen({super.key, required this.onBack, this.initialDateFilter});
 
-  /// Because this page lives inside the shell, there's no route to pop —
-  /// "back" asks the shell to switch to the previously active tab.
+  // Because this page lives inside the shell, there's no route to pop —
+  // "back" asks the shell to switch to the previously active tab.
   final VoidCallback onBack;
 
-  /// Set when arriving here from Calendar's "View in TODO" — filters the
-  /// list to tasks due on this date. Null for the normal Home → TODO path.
+  // Set when arriving here from Calendar's "View in TODO" — filters the
+  // list to tasks due on this date. Null for the normal Home → TODO path.
   final DateTime? initialDateFilter;
 
   @override
@@ -102,10 +102,10 @@ class _TodoScreenState extends State<TodoScreen> {
     await _syncNotification(task);
   }
 
-  /// Re-arms or cancels both reminders on every save: the quiet
-  /// Notification and the ringing Alarm each follow their own switch, and
-  /// both stop when the due date is cleared or the task is marked done.
-  /// (Same rule as TaskBinService._resyncReminders.)
+  // Re-arms or cancels both reminders on every save: the quiet
+  // Notification and the ringing Alarm each follow their own switch, and
+  // both stop when the due date is cleared or the task is marked done.
+  // (Same rule as TaskBinService._resyncReminders.)
   Future<void> _syncNotification(TodoTask task) async {
     final live = task.dueDate != null && !task.isDone;
     final notifications = NotificationService.instance;
@@ -475,9 +475,9 @@ class _TaskCard extends StatelessWidget {
     return '${d.day}/${d.month}/${d.year}';
   }
 
-  /// Time isn't its own field on TodoTask — it rides along inside
-  /// dueDate — so a plain date-only due date (saved as midnight) has
-  /// nothing to show here, and this returns null for it.
+  // Time isn't its own field on TodoTask — it rides along inside
+  // dueDate — so a plain date-only due date (saved as midnight) has
+  // nothing to show here, and this returns null for it.
   String? _timeLabel(BuildContext context) {
     final d = task.dueDate!;
     if (d.hour == 0 && d.minute == 0) return null;

@@ -5,7 +5,7 @@ import 'package:taskflow/models/todo_task.dart';
 import 'package:taskflow/services/notification_service.dart';
 import 'package:taskflow/services/todo_refresh_bus.dart';
 
-/// A task sitting in the Archive or the Trash, plus when it got there.
+// A task sitting in the Archive or the Trash, plus when it got there.
 class BinEntry {
   const BinEntry({required this.task, this.archivedAt, this.deletedAt});
 
@@ -14,42 +14,42 @@ class BinEntry {
   final DateTime? deletedAt;
 }
 
-/// Everything about hiding tasks without destroying them.
-///
-/// A task is in exactly one of three places, decided by two timestamps
-/// on its row:
-///
-/// * **Main list** — archivedAt and deletedAt are both null.
-/// * **Archive** — archivedAt is set, deletedAt is null.
-/// * **Trash** — deletedAt is set. archivedAt is left as it was, so a
-///   task that was archived and then deleted goes back to the *Archive*
-///   when restored, not the main list: restoring undoes the delete and
-///   nothing else.
-///
-/// Archived and trashed tasks never have a live reminder — it's cancelled
-/// when they leave the main list and re-armed when they return.
-///
-/// Every change here calls [TodoRefreshBus.notify], so the TODO list and
-/// Calendar reload on their own.
+// Everything about hiding tasks without destroying them.
+//
+// A task is in exactly one of three places, decided by two timestamps
+// on its row:
+//
+// * **Main list** — archivedAt and deletedAt are both null.
+// * **Archive** — archivedAt is set, deletedAt is null.
+// * **Trash** — deletedAt is set. archivedAt is left as it was, so a
+//   task that was archived and then deleted goes back to the *Archive*
+//   when restored, not the main list: restoring undoes the delete and
+//   nothing else.
+//
+// Archived and trashed tasks never have a live reminder — it's cancelled
+// when they leave the main list and re-armed when they return.
+//
+// Every change here calls [TodoRefreshBus.notify], so the TODO list and
+// Calendar reload on their own.
 class TaskBinService {
   TaskBinService._();
   static final TaskBinService instance = TaskBinService._();
 
-  /// How long a task stays completed before it's archived automatically.
+  // How long a task stays completed before it's archived automatically.
   static const autoArchiveAfter = Duration(days: 7);
 
   AppDatabase get _db => AppDatabase.instance;
 
   // --------------------------------------------------------------- reading
 
-  /// Archived tasks (not in the Trash), most recently archived first.
+  // Archived tasks (not in the Trash), most recently archived first.
   Future<List<BinEntry>> archived() async {
     final entries = await _select(trashed: false);
     entries.sort((a, b) => b.archivedAt!.compareTo(a.archivedAt!));
     return entries;
   }
 
-  /// Trashed tasks, most recently deleted first.
+  // Trashed tasks, most recently deleted first.
   Future<List<BinEntry>> trashed() async {
     final entries = await _select(trashed: true);
     entries.sort((a, b) => b.deletedAt!.compareTo(a.deletedAt!));
@@ -61,8 +61,8 @@ class TaskBinService {
 
   // ------------------------------------------------------------ completion
 
-  /// Stamps (or clears) when a task was completed. Call from the checkbox
-  /// toggle, so the 7-day auto-archive clock starts when you tick it.
+  // Stamps (or clears) when a task was completed. Call from the checkbox
+  // toggle, so the 7-day auto-archive clock starts when you tick it.
   Future<void> recordCompletion(String id, {required bool done}) => _write(
     id,
     TodosCompanion(completedAt: Value(done ? DateTime.now() : null)),
@@ -121,15 +121,15 @@ class TaskBinService {
     TodoRefreshBus.notify();
   }
 
-  /// Permanently removes one task (and its subtasks). Not undoable.
+  // Permanently removes one task (and its subtasks). Not undoable.
   Future<void> deleteForever(String id) async {
     await _db.deleteTodo(id);
     await _cancelReminders(id);
     TodoRefreshBus.notify();
   }
 
-  /// Permanently removes everything in the Trash. Returns how many tasks
-  /// that was. Not undoable.
+  // Permanently removes everything in the Trash. Returns how many tasks
+  // that was. Not undoable.
   Future<int> emptyTrash() async {
     final ids = [for (final e in await trashed()) e.task.id];
     await _db.transaction(() async {
@@ -146,14 +146,14 @@ class TaskBinService {
 
   // ---------------------------------------------------------- auto-archive
 
-  /// Archives every completed task that finished more than
-  /// [autoArchiveAfter] ago. Returns how many it archived. Cheap enough
-  /// to run on every app start.
-  ///
-  /// A completed task with no completedAt (finished before that column
-  /// existed) has its 7 days start *now* rather than being archived on
-  /// the spot — otherwise installing this would instantly sweep away
-  /// every old completed task.
+  // Archives every completed task that finished more than
+  // [autoArchiveAfter] ago. Returns how many it archived. Cheap enough
+  // to run on every app start.
+  //
+  // A completed task with no completedAt (finished before that column
+  // existed) has its 7 days start *now* rather than being archived on
+  // the spot — otherwise installing this would instantly sweep away
+  // every old completed task.
   Future<int> autoArchiveCompleted() async {
     final now = DateTime.now();
     final cutoff = now.subtract(autoArchiveAfter);
@@ -192,9 +192,9 @@ class TaskBinService {
     return found.isEmpty ? null : found.first;
   }
 
-  /// One query for every lookup in this file. [trashed] true = in the
-  /// Trash, false = archived and not trashed, null = no such filter;
-  /// [id] narrows to one task.
+  // One query for every lookup in this file. [trashed] true = in the
+  // Trash, false = archived and not trashed, null = no such filter;
+  // [id] narrows to one task.
   Future<List<BinEntry>> _select({bool? trashed, String? id}) async {
     final rows =
         await (_db.select(_db.todos)..where((t) {
@@ -243,9 +243,9 @@ class TaskBinService {
     } catch (_) {}
   }
 
-  /// Re-arms a task's reminders after it returns to the main list — the
-  /// same rule every other save path uses: only for a task that has a due
-  /// date, isn't done, and has the switch on.
+  // Re-arms a task's reminders after it returns to the main list — the
+  // same rule every other save path uses: only for a task that has a due
+  // date, isn't done, and has the switch on.
   Future<void> _resyncReminders(String id) async {
     final entry = await _find(id);
     if (entry == null) return;

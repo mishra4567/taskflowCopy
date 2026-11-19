@@ -11,19 +11,19 @@ import 'package:taskflow/services/spend/receipt_layout.dart';
 import 'package:taskflow/services/spend/receipt_scanner.dart';
 import 'expense_sheet.dart';
 
-/// true: a payment the parser is confident about (amount, payee and UPI
-/// reference all read, not a failed receipt) is saved straight away, with
-/// an Edit button on the snackbar. false: the confirm sheet always opens.
+// true: a payment the parser is confident about (amount, payee and UPI
+// reference all read, not a failed receipt) is saved straight away, with
+// an Edit button on the snackbar. false: the confirm sheet always opens.
 const autoSaveConfidentPayments = true;
 
-/// Reads a payment screenshot and either saves it or opens the confirm
-/// sheet, pre-filled. Used by both "Scan screenshot" on the Spending
-/// screen and images shared into the app from GPay / PhonePe / etc.
-/// A receipt that says "Received from ..." is saved as money received.
-///
-/// Set [deleteWhenDone] only for a file this app made itself (a shared
-/// image copied into the cache) — never for a file the person picked,
-/// which on some platforms is their original.
+// Reads a payment screenshot and either saves it or opens the confirm
+// sheet, pre-filled. Used by both "Scan screenshot" on the Spending
+// screen and images shared into the app from GPay / PhonePe / etc.
+// A receipt that says "Received from ..." is saved as money received.
+//
+// Set [deleteWhenDone] only for a file this app made itself (a shared
+// image copied into the cache) — never for a file the person picked,
+// which on some platforms is their original.
 Future<void> importPaymentImage(
   BuildContext context,
   String imagePath, {

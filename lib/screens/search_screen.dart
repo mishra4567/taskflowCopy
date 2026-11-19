@@ -3,7 +3,7 @@ import '../theme/app_palette.dart';
 import '../theme/app_tokens.dart';
 import '../theme/app_typography.dart';
 
-/// Unified search across TODO list, roadmap, and contacts.
+// Unified search across TODO list, roadmap, and contacts.
 class SearchScreen extends StatelessWidget {
   const SearchScreen({super.key});
 

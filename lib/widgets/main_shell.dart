@@ -24,13 +24,13 @@ import 'quick_add/quick_add_fab.dart';
 import 'app_snackbar.dart';
 import 'slide_page_route.dart';
 
-/// Bottom nav destinations. `extensions`, `todo`, `testing`, `contacts`,
-/// and `extensionRunner` aren't bottom-nav icons (Calendar took one slot,
-/// the rest are opened from Home cards) but they live in this enum so
-/// they render *inside* the shell — that's what keeps the bottom bar and
-/// FAB visible on those pages instead of being covered by a pushed
-/// route. The center FAB is a quick-add action, not a page, so it isn't
-/// part of this set either.
+// Bottom nav destinations. `extensions`, `todo`, `testing`, `contacts`,
+// and `extensionRunner` aren't bottom-nav icons (Calendar took one slot,
+// the rest are opened from Home cards) but they live in this enum so
+// they render *inside* the shell — that's what keeps the bottom bar and
+// FAB visible on those pages instead of being covered by a pushed
+// route. The center FAB is a quick-add action, not a page, so it isn't
+// part of this set either.
 enum _NavPage {
   home,
   todo,
@@ -55,22 +55,22 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
   _NavPage _page = _NavPage.home;
   _NavPage _previousPage = _NavPage.home;
 
-  /// Set right before switching to the TODO tab from Calendar's
-  /// "View in TODO" action; cleared whenever TODO is opened any other
-  /// way, so a stale date filter never carries over.
+  // Set right before switching to the TODO tab from Calendar's
+  // "View in TODO" action; cleared whenever TODO is opened any other
+  // way, so a stale date filter never carries over.
   DateTime? _todoDateFilter;
 
-  /// Which installed extension the generic extensionRunner tab shows —
-  /// set right before switching to it, the same pattern as
-  /// _todoDateFilter. Unlike TODO/Testing/Contacts (one fixed screen
-  /// each), the runner is reused across however many extensions are
-  /// installed, so it needs to know which one to load.
+  // Which installed extension the generic extensionRunner tab shows —
+  // set right before switching to it, the same pattern as
+  // _todoDateFilter. Unlike TODO/Testing/Contacts (one fixed screen
+  // each), the runner is reused across however many extensions are
+  // installed, so it needs to know which one to load.
   String? _activeExtensionType;
   String? _activeExtensionTitle;
 
-  /// True only on Home — every other _page is "internal" navigation the
-  /// OS back button/gesture doesn't know about (see PopScope in build()),
-  /// since these pages are swapped via state, not pushed Navigator routes.
+  // True only on Home — every other _page is "internal" navigation the
+  // OS back button/gesture doesn't know about (see PopScope in build()),
+  // since these pages are swapped via state, not pushed Navigator routes.
   bool get _isTopLevel => _page == _NavPage.home;
   bool _handlingShare = false;
 
@@ -119,8 +119,8 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
     _NavPage.more: 'TaskFlow',
   };
 
-  /// Pages that supply their own AppBar (title + their own actions),
-  /// so the shell hides its bar entirely for them.
+  // Pages that supply their own AppBar (title + their own actions),
+  // so the shell hides its bar entirely for them.
   static const _hidesShellAppBar = {
     _NavPage.search,
     _NavPage.todo,
@@ -137,9 +137,9 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
     });
   }
 
-  /// Opens the TODO tab, optionally pre-filtered to a date (from
-  /// Calendar) — explicitly passing null elsewhere (Home's TODO card)
-  /// is what keeps a previous date filter from leaking back in.
+  // Opens the TODO tab, optionally pre-filtered to a date (from
+  // Calendar) — explicitly passing null elsewhere (Home's TODO card)
+  // is what keeps a previous date filter from leaking back in.
   void _openTodo({DateTime? dateFilter}) {
     setState(() {
       _todoDateFilter = dateFilter;
@@ -150,7 +150,7 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
 
   void _openTesting() => _selectPage(_NavPage.testing);
 
-  /// Opens the generic extension-runner tab for one installed extension.
+  // Opens the generic extension-runner tab for one installed extension.
   void _openExtension(String extensionType, String title) {
     setState(() {
       _activeExtensionType = extensionType;
@@ -160,8 +160,8 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
     });
   }
 
-  /// Slide direction follows the tabs' declared order, so moving toward
-  /// the end of the list slides one way and moving back slides the other.
+  // Slide direction follows the tabs' declared order, so moving toward
+  // the end of the list slides one way and moving back slides the other.
   bool get _movingForward =>
       _NavPage.values.indexOf(_page) >= _NavPage.values.indexOf(_previousPage);
 

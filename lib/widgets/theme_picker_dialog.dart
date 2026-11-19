@@ -4,7 +4,7 @@ import '../theme/app_tokens.dart';
 import '../theme/app_typography.dart';
 import '../theme/theme_controller.dart';
 
-/// The Light / Dark / System picker opened from the "Theme" row in More.
+// The Light / Dark / System picker opened from the "Theme" row in More.
 Future<void> showThemePickerDialog(BuildContext context) {
   final colors = context.colors;
   return showDialog<void>(

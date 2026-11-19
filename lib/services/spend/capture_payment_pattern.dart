@@ -25,10 +25,10 @@
 // confirm sheet's "Show scanned text" shows the raw scanned rows, which
 // is what's needed to add or adjust a rule for a receipt that misses.
 
-/// Which third of the receipt, top to bottom.
+// Which third of the receipt, top to bottom.
 enum PaymentSection { header, details, footer }
 
-/// Finds an amount in one line: group 1 of [pattern] is the number.
+// Finds an amount in one line: group 1 of [pattern] is the number.
 class AmountRule {
   AmountRule(String source, {this.prefer = PaymentSection.header})
     : pattern = RegExp(source, caseSensitive: false);
@@ -37,11 +37,11 @@ class AmountRule {
   final PaymentSection prefer;
 }
 
-/// Finds a value that follows a label ("Paid to", "UPI transaction ID").
-/// [label] matches the label line and its group 1 is whatever follows the
-/// label on that same line ('' if nothing). The value is looked for
-/// there first and, when [valueOnNextLine], on the line below — many
-/// receipts print the label and the value on separate lines.
+// Finds a value that follows a label ("Paid to", "UPI transaction ID").
+// [label] matches the label line and its group 1 is whatever follows the
+// label on that same line ('' if nothing). The value is looked for
+// there first and, when [valueOnNextLine], on the line below — many
+// receipts print the label and the value on separate lines.
 class LabelRule {
   LabelRule(
     String label, {
@@ -55,20 +55,20 @@ class LabelRule {
 
   final RegExp label;
 
-  /// What the value must look like (the match is used); null = the whole
-  /// remaining text.
+  // What the value must look like (the match is used); null = the whole
+  // remaining text.
   final RegExp? value;
 
-  /// A line matching this is skipped — e.g. GPay's own "Google
-  /// transaction ID", which isn't the UPI reference.
+  // A line matching this is skipped — e.g. GPay's own "Google
+  // transaction ID", which isn't the UPI reference.
   final RegExp? exclude;
   final bool valueOnNextLine;
   final PaymentSection prefer;
 }
 
-/// A value recognised by its shape alone, with no label (a 12-digit UPI
-/// reference, PhonePe's T-prefixed transaction id). The whole match is
-/// the value.
+// A value recognised by its shape alone, with no label (a 12-digit UPI
+// reference, PhonePe's T-prefixed transaction id). The whole match is
+// the value.
 class TokenRule {
   TokenRule(String source, {this.prefer = PaymentSection.footer})
     : pattern = RegExp(source, caseSensitive: false);
@@ -77,7 +77,7 @@ class TokenRule {
   final PaymentSection prefer;
 }
 
-/// Everything known about one payment app's receipt.
+// Everything known about one payment app's receipt.
 class PaymentAppPattern {
   PaymentAppPattern({
     required this.id,
@@ -89,15 +89,15 @@ class PaymentAppPattern {
     this.referenceTokens = const [],
   }) : detect = [for (final d in detect) RegExp(d, caseSensitive: false)];
 
-  /// Short stable name: 'phonepe', 'gpay', ...
+  // Short stable name: 'phonepe', 'gpay', ...
   final String id;
 
-  /// What the expense's "Paid with" is set to when this app is detected;
-  /// null for the generic pattern.
+  // What the expense's "Paid with" is set to when this app is detected;
+  // null for the generic pattern.
   final String? method;
 
-  /// Words / shapes that identify the app. The pattern with the most
-  /// hits in the text wins.
+  // Words / shapes that identify the app. The pattern with the most
+  // hits in the text wins.
   final List<RegExp> detect;
 
   final List<AmountRule> amount;
@@ -119,7 +119,8 @@ const _amountSource = '$_currency\\s*$_number';
 //  - a row that is only a number ("%20", "20"); capped at 9 digits so a
 //    12-digit UTR or a phone number is never taken for an amount;
 //  - a row that ends in "% 20" / "? 20" (name and amount read as one row).
-const _loneNumberSource = r'^[^\w\s]{0,2}\s*([0-9][0-9,]{0,8}(?:\.[0-9]{1,2})?)$';
+const _loneNumberSource =
+    r'^[^\w\s]{0,2}\s*([0-9][0-9,]{0,8}(?:\.[0-9]{1,2})?)$';
 const _trailingMisreadSource =
     r'[A-Za-z].*\s[%?]\s?([0-9][0-9,]{0,8}(?:\.[0-9]{1,2})?)$';
 
@@ -139,17 +140,17 @@ const _paidAmountToLabel =
 const _receivedFromLabel =
     r'^(?:received\s+from|you\s+received\s+from|money\s+received\s+from)(?:\s*[:\-]\s*|\s+|$)(.*)$';
 
-/// Text that says the money came in rather than went out. When it
-/// matches, the payment is read as "received" and the payee is taken
-/// from the "Received from" row.
+// Text that says the money came in rather than went out. When it
+// matches, the payment is read as "received" and the payee is taken
+// from the "Received from" row.
 final RegExp receivedDirectionRe = RegExp(
   r'\b(?:received\s+from|you\s+received)\b',
   caseSensitive: false,
 );
 
-/// Payee rules used first for a receipt that says money was received.
-/// (Written from the usual wording, not checked against real received
-/// receipts — add one and adjust if it misses.)
+// Payee rules used first for a receipt that says money was received.
+// (Written from the usual wording, not checked against real received
+// receipts — add one and adjust if it misses.)
 final List<LabelRule> receivedPayeeRules = [
   LabelRule(_receivedFromLabel, prefer: PaymentSection.header),
 ];
@@ -166,7 +167,7 @@ const _longRef = r'[A-Za-z0-9]{10,}';
 
 // ------------------------------------------------------------------ patterns
 
-/// Used for every receipt, after the detected app's own rules.
+// Used for every receipt, after the detected app's own rules.
 final PaymentAppPattern genericPaymentPattern = PaymentAppPattern(
   id: 'generic',
   method: null,
@@ -275,8 +276,8 @@ final PaymentAppPattern amazonPayPattern = PaymentAppPattern(
   referenceTokens: [TokenRule(_digits12)],
 );
 
-/// Add a new app's pattern here (and detect rules in it) to teach the
-/// scanner another receipt. Order only matters for ties.
+// Add a new app's pattern here (and detect rules in it) to teach the
+// scanner another receipt. Order only matters for ties.
 final List<PaymentAppPattern> paymentAppPatterns = [
   phonePePattern,
   gPayPattern,
@@ -285,8 +286,8 @@ final List<PaymentAppPattern> paymentAppPatterns = [
   amazonPayPattern,
 ];
 
-/// The pattern whose detect rules hit the text most, or null when none
-/// of them hit (the generic pattern is used on its own then).
+// The pattern whose detect rules hit the text most, or null when none
+// of them hit (the generic pattern is used on its own then).
 PaymentAppPattern? detectPaymentApp(String text) {
   PaymentAppPattern? best;
   var bestScore = 0;

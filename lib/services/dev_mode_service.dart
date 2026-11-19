@@ -1,9 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Simple app-wide developer-mode flag, persisted across app restarts.
-/// Anything that needs to react to it (like Home's extension cards)
-/// can listen via `DevModeService.instance.enabled`.
+// Simple app-wide developer-mode flag, persisted across app restarts.
+// Anything that needs to react to it (like Home's extension cards)
+// can listen via `DevModeService.instance.enabled`.
 class DevModeService {
   DevModeService._();
   static final DevModeService instance = DevModeService._();
@@ -14,8 +14,8 @@ class DevModeService {
 
   bool _loaded = false;
 
-  /// Call once at app startup (e.g. in main() before runApp, or in your
-  /// root widget's initState) so the flag is ready before Home builds.
+  // Call once at app startup (e.g. in main() before runApp, or in your
+  // root widget's initState) so the flag is ready before Home builds.
   Future<void> load() async {
     if (_loaded) return;
     final prefs = await SharedPreferences.getInstance();

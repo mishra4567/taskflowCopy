@@ -6,7 +6,7 @@ import 'package:taskflow/theme/app_palette.dart';
 import 'package:taskflow/theme/app_tokens.dart';
 import 'package:taskflow/theme/app_typography.dart';
 
-/// One tappable action on a [BinTaskTile] (restore, delete forever, ...).
+// One tappable action on a [BinTaskTile] (restore, delete forever, ...).
 class BinAction {
   const BinAction({
     required this.icon,
@@ -39,7 +39,7 @@ String formatBinDate(DateTime d) {
   return '${d.day} ${months[d.month - 1]} ${d.year}';
 }
 
-/// Yes/no dialog for anything that can't be undone.
+// Yes/no dialog for anything that can't be undone.
 Future<bool> confirmDestructive(
   BuildContext context, {
   required String title,
@@ -69,12 +69,12 @@ Future<bool> confirmDestructive(
   return confirmed ?? false;
 }
 
-/// AppBar icon for the Archive and Trash pages that runs the same
-/// "Back up now" as Settings → Backup (BackupService.exportToZip), so
-/// there is one backup, reachable from all three places. Shows a spinner
-/// while it runs (the save dialog and the zip take a moment) and reports
-/// the result in a snackbar — including "cancelled", so closing the save
-/// dialog doesn't look like nothing happened.
+// AppBar icon for the Archive and Trash pages that runs the same
+// "Back up now" as Settings → Backup (BackupService.exportToZip), so
+// there is one backup, reachable from all three places. Shows a spinner
+// while it runs (the save dialog and the zip take a moment) and reports
+// the result in a snackbar — including "cancelled", so closing the save
+// dialog doesn't look like nothing happened.
 class BackupNowButton extends StatefulWidget {
   const BackupNowButton({super.key});
 
@@ -164,7 +164,7 @@ class BinTaskTile extends StatelessWidget {
 
   final TodoTask task;
 
-  /// e.g. "Archived 3 Oct 2026" — shown after the category.
+  // e.g. "Archived 3 Oct 2026" — shown after the category.
   final String caption;
   final List<BinAction> actions;
 

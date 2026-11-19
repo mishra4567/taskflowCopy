@@ -15,9 +15,9 @@ class ExtensionInstallException implements Exception {
   String toString() => message;
 }
 
-/// Cross-platform extension storage (Web, Android, iOS, desktop).
-/// Installed zips are persisted in [SharedPreferences] so the same code
-/// path works everywhere — no dart:io filesystem access required.
+// Cross-platform extension storage (Web, Android, iOS, desktop).
+// Installed zips are persisted in [SharedPreferences] so the same code
+// path works everywhere — no dart:io filesystem access required.
 class ExtensionManager {
   ExtensionManager._();
   static final ExtensionManager instance = ExtensionManager._();
@@ -91,10 +91,7 @@ class ExtensionManager {
     }
 
     final store = await _loadStore();
-    store[manifest.id] = {
-      'manifest': manifest.toJson(),
-      'files': files,
-    };
+    store[manifest.id] = {'manifest': manifest.toJson(), 'files': files};
     await _saveStore(store);
 
     return InstalledExtension(manifest: manifest, storageId: manifest.id);

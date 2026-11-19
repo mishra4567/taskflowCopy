@@ -2,9 +2,9 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_palette.dart';
 
-/// The shell's center-docked quick-add button. Kept as its own widget
-/// (rather than inline in MainShell) so it can grow to show extension-
-/// contributed actions without bloating main_shell.dart.
+// The shell's center-docked quick-add button. Kept as its own widget
+// (rather than inline in MainShell) so it can grow to show extension-
+// contributed actions without bloating main_shell.dart.
 class QuickAddFab extends StatelessWidget {
   const QuickAddFab({super.key, required this.onTap});
 

@@ -8,8 +8,8 @@ import 'capture_payment_pattern.dart';
 import 'money.dart';
 import 'receipt_layout.dart';
 
-/// What could be read out of a payment receipt. Every field is nullable:
-/// OCR text is messy, so this only fills in what it is reasonably sure of.
+// What could be read out of a payment receipt. Every field is nullable:
+// OCR text is messy, so this only fills in what it is reasonably sure of.
 class ParsedPayment {
   const ParsedPayment({
     this.amountPaise,
@@ -21,23 +21,23 @@ class ParsedPayment {
     this.direction = 'paid',
   });
 
-  /// 'paid' (money went out — the default) or 'received' (the receipt
-  /// says "Received from ..."). For a received payment, [payee] is the
-  /// person who paid you.
+  // 'paid' (money went out — the default) or 'received' (the receipt
+  // says "Received from ..."). For a received payment, [payee] is the
+  // person who paid you.
   final String direction;
 
   final int? amountPaise;
   final String? payee;
   final DateTime? paidAt;
 
-  /// The UPI transaction / UTR number — the same on every copy of the
-  /// same payment, so it's what stops one screenshot being saved twice.
+  // The UPI transaction / UTR number — the same on every copy of the
+  // same payment, so it's what stops one screenshot being saved twice.
   final String? upiRef;
 
-  /// "GPay", "PhonePe", "Paytm", "BHIM" or "Other" when the app is known.
+  // "GPay", "PhonePe", "Paytm", "BHIM" or "Other" when the app is known.
   final String? method;
 
-  /// The text mentions failed / pending / declined / refunded.
+  // The text mentions failed / pending / declined / refunded.
   final bool looksUnsuccessful;
 
   bool get isEmpty =>
@@ -47,13 +47,13 @@ class ParsedPayment {
       upiRef == null &&
       method == null;
 
-  /// Safe to save without asking: amount, payee and a reference to guard
-  /// against duplicates are all present, the receipt doesn't look failed,
-  /// and the payee looks like a name (a UPI id, or text with no digits).
-  /// A payee with digits in it usually means an amount was read into the
-  /// name by mistake, so that goes to the confirm sheet instead. (A
-  /// missing date is fine — a payment shared straight after paying is
-  /// saved as "now".)
+  // Safe to save without asking: amount, payee and a reference to guard
+  // against duplicates are all present, the receipt doesn't look failed,
+  // and the payee looks like a name (a UPI id, or text with no digits).
+  // A payee with digits in it usually means an amount was read into the
+  // name by mistake, so that goes to the confirm sheet instead. (A
+  // missing date is fine — a payment shared straight after paying is
+  // saved as "now".)
   bool get isConfident =>
       amountPaise != null &&
       payee != null &&
@@ -65,7 +65,7 @@ class ParsedPayment {
 class PaymentTextParser {
   PaymentTextParser._();
 
-  /// Plain text with no positions (text shared as text, tests).
+  // Plain text with no positions (text shared as text, tests).
   static ParsedPayment parse(String raw) => parseRows(rowsFromPlainText(raw));
 
   static ParsedPayment parseRows(List<ReceiptRow> rows) {
@@ -232,8 +232,8 @@ class PaymentTextParser {
     return value.firstMatch(t)?.group(0);
   }
 
-  /// A real reference is mostly digits. This rejects ordinary words
-  /// ("Successful", "Completed") picked up from the row below a label.
+  // A real reference is mostly digits. This rejects ordinary words
+  // ("Successful", "Completed") picked up from the row below a label.
   static bool _looksLikeRef(String token) =>
       RegExp(r'\d').allMatches(token).length >= 6;
 

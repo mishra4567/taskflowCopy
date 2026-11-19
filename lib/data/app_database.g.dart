@@ -2562,7 +2562,7 @@ class $ExpensesTable extends Expenses with TableInfo<$ExpensesTable, Expense> {
 class Expense extends DataClass implements Insertable<Expense> {
   final int id;
 
-  /// Money is stored in paise (integer) to avoid floating-point errors.
+  // Money is stored in paise (integer) to avoid floating-point errors.
   final int amountPaise;
   final DateTime paidAt;
   final String payee;
@@ -2570,13 +2570,13 @@ class Expense extends DataClass implements Insertable<Expense> {
   final String note;
   final String method;
 
-  /// UPI reference; null for manual or cash payments.
+  // UPI reference; null for manual or cash payments.
   final String? upiRef;
 
-  /// Where the row came from: 'manual' or 'screenshot'.
+  // Where the row came from: 'manual' or 'screenshot'.
   final String source;
 
-  /// 'paid' (money went out) or 'received' (money came in).
+  // 'paid' (money went out) or 'received' (money came in).
   final String direction;
   final DateTime createdAt;
   const Expense({

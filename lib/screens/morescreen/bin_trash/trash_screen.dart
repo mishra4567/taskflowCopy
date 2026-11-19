@@ -7,8 +7,8 @@ import 'package:taskflow/theme/app_tokens.dart';
 import 'package:taskflow/theme/app_typography.dart';
 import 'bin_task_tile.dart';
 
-/// Deleted tasks. They stay here until the person empties the Trash
-/// themselves — there is deliberately no automatic purge.
+// Deleted tasks. They stay here until the person empties the Trash
+// themselves — there is deliberately no automatic purge.
 class TrashScreen extends StatefulWidget {
   const TrashScreen({super.key});
 

@@ -5,14 +5,14 @@ import '../../theme/app_palette.dart';
 import '../../theme/app_tokens.dart';
 import '../../theme/app_typography.dart';
 
-/// Live permission status for everything TaskFlow's notification/alarm
-/// feature actually needs — not a static list, each row reflects the
-/// device's real current grant state. Refreshes on tap and whenever the
-/// app resumes (e.g. coming back from the system settings screen after
-/// granting something there), so the status shown is never stale.
-/// Shared between MoreScreen and SettingsScreen so both show the exact
-/// same tracked permissions and logic rather than two copies drifting
-/// apart.
+// Live permission status for everything TaskFlow's notification/alarm
+// feature actually needs — not a static list, each row reflects the
+// device's real current grant state. Refreshes on tap and whenever the
+// app resumes (e.g. coming back from the system settings screen after
+// granting something there), so the status shown is never stale.
+// Shared between MoreScreen and SettingsScreen so both show the exact
+// same tracked permissions and logic rather than two copies drifting
+// apart.
 const _trackedPermissions = [
   Permission.notification,
   Permission.scheduleExactAlarm,

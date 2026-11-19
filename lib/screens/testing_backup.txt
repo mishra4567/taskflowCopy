@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../theme/app_palette.dart';
 
-/// Placeholder screen for the Texting extension, for debugging/testing
-/// the card + navigation before this becomes a real installed extension.
+// Placeholder screen for the Texting extension, for debugging/testing
+// the card + navigation before this becomes a real installed extension.
 class TestingExtensionScreen extends StatelessWidget {
   const TestingExtensionScreen({super.key});
 

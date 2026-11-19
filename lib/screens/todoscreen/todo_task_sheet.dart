@@ -8,15 +8,15 @@ import '../../theme/app_palette.dart';
 import '../../theme/app_tokens.dart';
 import '../../theme/app_typography.dart';
 
-/// Opens the add/edit bottom sheet for a task. Pass [existing] to edit,
-/// or omit it to create a new task. [initialDueDate] pre-fills the due
-/// date on a *new* task (e.g. from Calendar's "+" on a selected day)
-/// without making it look like an edit — it's ignored when [existing]
-/// is given, since that already carries its own due date.
-///
-/// [onArchive] and [onDelete] only show (as buttons) when editing. Delete
-/// is labelled "Move to Trash" — callers should route it through
-/// TaskBinService.moveToTrash rather than destroying the task.
+// Opens the add/edit bottom sheet for a task. Pass [existing] to edit,
+// or omit it to create a new task. [initialDueDate] pre-fills the due
+// date on a *new* task (e.g. from Calendar's "+" on a selected day)
+// without making it look like an edit — it's ignored when [existing]
+// is given, since that already carries its own due date.
+//
+// [onArchive] and [onDelete] only show (as buttons) when editing. Delete
+// is labelled "Move to Trash" — callers should route it through
+// TaskBinService.moveToTrash rather than destroying the task.
 Future<void> showTodoTaskSheet(
   BuildContext context, {
   TodoTask? existing,
@@ -143,9 +143,9 @@ class _TodoTaskSheetState extends State<_TodoTaskSheet> {
     }
   }
 
-  /// The single DateTime that actually gets saved — date and time picked
-  /// independently, combined here. Falls back to midnight when only a
-  /// date was chosen, matching the previous date-only behavior.
+  // The single DateTime that actually gets saved — date and time picked
+  // independently, combined here. Falls back to midnight when only a
+  // date was chosen, matching the previous date-only behavior.
   DateTime? get _combinedDueDate {
     if (_dueDate == null) return null;
     if (_dueTime == null) return _dueDate;
@@ -193,8 +193,8 @@ class _TodoTaskSheetState extends State<_TodoTaskSheet> {
     }
   }
 
-  /// Same combine-date-and-time pattern as [_combinedDueDate], for the
-  /// end side. Only meaningful when [_isMultiDay] is on.
+  // Same combine-date-and-time pattern as [_combinedDueDate], for the
+  // end side. Only meaningful when [_isMultiDay] is on.
   DateTime? get _combinedEndDate {
     if (_endDate == null) return null;
     if (_endTime == null) return _endDate;
@@ -280,10 +280,10 @@ class _TodoTaskSheetState extends State<_TodoTaskSheet> {
     Navigator.of(context).pop();
   }
 
-  /// Turning the switch on asks for the OS permission first; turning it
-  /// off never needs a permission check. If the person already said
-  /// "don't ask again," `.request()` won't show a prompt at all, so we
-  /// route to system settings instead of silently failing to enable it.
+  // Turning the switch on asks for the OS permission first; turning it
+  // off never needs a permission check. If the person already said
+  // "don't ask again," `.request()` won't show a prompt at all, so we
+  // route to system settings instead of silently failing to enable it.
   Future<void> _onNotificationToggled(bool value) async {
     if (!value) {
       setState(() => _notificationEnabled = false);
@@ -603,40 +603,36 @@ class _TodoTaskSheetState extends State<_TodoTaskSheet> {
               // ARCHIVE: Archive / Move to Trash (editing only) on their
               // own row; Save is full width below so three buttons don't
               // get cramped side by side.
-              if (isEditing &&
-                  (widget.onArchive != null || widget.onDelete != null)) ...[
-                Row(
-                  children: [
-                    if (isEditing && widget.onArchive != null) ...[
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: _archive,
-                          icon: const Icon(
-                            Icons.inventory_2_outlined,
-                            size: 18,
-                          ),
-                          label: const Text('Archive'),
-                        ),
-                      ),
-                      const SizedBox(width: AppSpacing.sm),
-                    ],
+              Row(
+                children: [
+                  if (isEditing && widget.onArchive != null) ...[
                     Expanded(
-                      child: ElevatedButton(
-                        onPressed: _save,
-                        child: Text(isEditing ? 'Save changes' : 'Add task'),
+                      child: OutlinedButton.icon(
+                        onPressed: _archive,
+                        icon: const Icon(Icons.inventory_2_outlined, size: 18),
+                        label: const Text('Archive'),
                       ),
                     ),
+                    const SizedBox(width: AppSpacing.sm),
                   ],
+                  if (isEditing && widget.onDelete != null)
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: _delete,
+                        icon: const Icon(Icons.delete_outline, size: 18),
+                        label: const Text('Move to Trash'),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _save,
+                  child: Text(isEditing ? 'Save changes' : 'Add task'),
                 ),
-                const SizedBox(height: AppSpacing.sm),
-              ],
-              // SizedBox(
-              //   width: double.infinity,
-              //   child: ElevatedButton(
-              //     onPressed: _save,
-              //     child: Text(isEditing ? 'Save changes' : 'Add task'),
-              //   ),
-              // ),
+              ),
             ],
           ),
         ),
@@ -645,10 +641,10 @@ class _TodoTaskSheetState extends State<_TodoTaskSheet> {
   }
 }
 
-/// Opens a compact picker for the app's alarm sound — the same choices
-/// AlarmSoundCard offers in Settings (built-in sounds, phone ringtones,
-/// upload), just reachable without leaving this sheet. The sound itself
-/// is one app-wide setting (AlarmSoundService), not stored per task.
+// Opens a compact picker for the app's alarm sound — the same choices
+// AlarmSoundCard offers in Settings (built-in sounds, phone ringtones,
+// upload), just reachable without leaving this sheet. The sound itself
+// is one app-wide setting (AlarmSoundService), not stored per task.
 void _showAlarmSoundSheet(BuildContext context) {
   showModalBottomSheet<void>(
     context: context,
@@ -658,11 +654,11 @@ void _showAlarmSoundSheet(BuildContext context) {
   );
 }
 
-/// Opens a small picker for how long Snooze waits before an alarm rings
-/// again — also one app-wide setting (AlarmSoundService.snoozeMinutes),
-/// not stored per task, same as the sound above. Deliberately much
-/// smaller than the sound sheet: just a row of duration chips, no
-/// preview/upload/etc. to manage.
+// Opens a small picker for how long Snooze waits before an alarm rings
+// again — also one app-wide setting (AlarmSoundService.snoozeMinutes),
+// not stored per task, same as the sound above. Deliberately much
+// smaller than the sound sheet: just a row of duration chips, no
+// preview/upload/etc. to manage.
 void _showSnoozePicker(BuildContext context) {
   showModalBottomSheet<void>(
     context: context,
@@ -672,10 +668,10 @@ void _showSnoozePicker(BuildContext context) {
   );
 }
 
-/// The tappable "Alarm sound: <name>" row shown under the Alarm switch
-/// when it's on. Rebuilds on its own via AnimatedBuilder so picking a
-/// new sound in the sheet above updates this row immediately once it
-/// closes, without the task sheet needing to know or care.
+// The tappable "Alarm sound: <name>" row shown under the Alarm switch
+// when it's on. Rebuilds on its own via AnimatedBuilder so picking a
+// new sound in the sheet above updates this row immediately once it
+// closes, without the task sheet needing to know or care.
 class _AlarmSoundRow extends StatelessWidget {
   const _AlarmSoundRow({required this.onTap});
 
@@ -715,11 +711,11 @@ class _AlarmSoundRow extends StatelessWidget {
   }
 }
 
-/// The tappable "Snooze: <n> min" row shown under the Alarm switch, right
-/// below _AlarmSoundRow. Same AnimatedBuilder-driven-by-the-service
-/// pattern: the sheet it opens just calls
-/// AlarmSoundService.instance.setSnoozeMinutes, and this row updates on
-/// its own without the task sheet needing to know that happened.
+// The tappable "Snooze: <n> min" row shown under the Alarm switch, right
+// below _AlarmSoundRow. Same AnimatedBuilder-driven-by-the-service
+// pattern: the sheet it opens just calls
+// AlarmSoundService.instance.setSnoozeMinutes, and this row updates on
+// its own without the task sheet needing to know that happened.
 class _SnoozeRow extends StatelessWidget {
   const _SnoozeRow({required this.onTap});
 
@@ -763,11 +759,11 @@ class _SnoozeRow extends StatelessWidget {
   }
 }
 
-/// Small bottom sheet for picking the snooze duration — a row of chips
-/// (snoozeOptions: 5/10/15/20/30 min) rather than a keyboard, same as
-/// Priority above. Tapping a chip saves immediately and closes; there's
-/// no separate "confirm" step, matching how _AlarmSoundSheet's built-in
-/// sound chips also apply on tap.
+// Small bottom sheet for picking the snooze duration — a row of chips
+// (snoozeOptions: 5/10/15/20/30 min) rather than a keyboard, same as
+// Priority above. Tapping a chip saves immediately and closes; there's
+// no separate "confirm" step, matching how _AlarmSoundSheet's built-in
+// sound chips also apply on tap.
 class _SnoozePickerSheet extends StatelessWidget {
   const _SnoozePickerSheet();
 
@@ -840,11 +836,11 @@ class _SnoozePickerSheet extends StatelessWidget {
   }
 }
 
-/// Minimal alarm-sound picker: preview the current choice, pick a
-/// built-in sound, choose a phone ringtone, upload a file, or reset to
-/// default. Deliberately a subset of AlarmSoundCard's actions — full
-/// management (and the BUILT-IN section header, etc.) stays in Settings;
-/// this is a quick swap from mid-task-creation.
+// Minimal alarm-sound picker: preview the current choice, pick a
+// built-in sound, choose a phone ringtone, upload a file, or reset to
+// default. Deliberately a subset of AlarmSoundCard's actions — full
+// management (and the BUILT-IN section header, etc.) stays in Settings;
+// this is a quick swap from mid-task-creation.
 class _AlarmSoundSheet extends StatefulWidget {
   const _AlarmSoundSheet();
 
@@ -943,7 +939,7 @@ class _AlarmSoundSheetState extends State<_AlarmSoundSheet> {
                           return;
                         }
                         final error = await service.preview();
-                        if (!mounted || error == null) return;
+                        if (!context.mounted || error == null) return;
                         ScaffoldMessenger.of(
                           context,
                         ).showSnackBar(SnackBar(content: Text(error)));
@@ -1008,11 +1004,11 @@ class _AlarmSoundSheetState extends State<_AlarmSoundSheet> {
   }
 }
 
-/// Same selected/unselected chip treatment used elsewhere (_PriorityChip
-/// here, _FilterChip in todo_screen.dart, _BuiltInChip in
-/// alarm_sound_card.dart) — kept as its own small copy rather than an
-/// import since the one in alarm_sound_card.dart is private to that file.
-/// Also reused by _SnoozePickerSheet above for the duration chips.
+// Same selected/unselected chip treatment used elsewhere (_PriorityChip
+// here, _FilterChip in todo_screen.dart, _BuiltInChip in
+// alarm_sound_card.dart) — kept as its own small copy rather than an
+// import since the one in alarm_sound_card.dart is private to that file.
+// Also reused by _SnoozePickerSheet above for the duration chips.
 class _SoundChip extends StatelessWidget {
   const _SoundChip({
     required this.label,

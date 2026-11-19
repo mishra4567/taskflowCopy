@@ -1,12 +1,12 @@
-/// lib/widgets/top_bar_menu.dart
+// lib/widgets/top_bar_menu.dart
 import 'package:flutter/material.dart';
 import '../theme/app_palette.dart';
 import '../theme/app_typography.dart';
 
 enum TopBarMenuAction { sync, theme, addExtension }
 
-/// The triple-dot overflow menu in the top app bar.
-/// Options: Sync, Theme, Add Extension.
+// The triple-dot overflow menu in the top app bar.
+// Options: Sync, Theme, Add Extension.
 class TopBarMenu extends StatelessWidget {
   const TopBarMenu({super.key, required this.onSelected});
 
@@ -20,7 +20,7 @@ class TopBarMenu extends StatelessWidget {
       onSelected: onSelected,
       itemBuilder: (context) => [
         _item(context, TopBarMenuAction.sync, Icons.sync, 'Sync'),
-        _item(context, TopBarMenuAction.theme, Icons.palette_outlined, 'Theme', ),
+        _item(context, TopBarMenuAction.theme, Icons.palette_outlined, 'Theme'),
         _item(
           context,
           TopBarMenuAction.addExtension,

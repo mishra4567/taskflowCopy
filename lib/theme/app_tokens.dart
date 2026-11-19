@@ -1,4 +1,4 @@
-/// Spacing and radius tokens from Design.md.
+// Spacing and radius tokens from Design.md.
 class AppSpacing {
   AppSpacing._();
 

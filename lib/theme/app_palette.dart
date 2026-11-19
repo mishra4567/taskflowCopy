@@ -1,12 +1,12 @@
 // app_palette
 import 'package:flutter/material.dart';
 
-/// All the custom color roles the app uses beyond Flutter's standard
-/// ColorScheme (text tiers, ghost borders, tonal surface steps). Registered
-/// as a ThemeExtension so screens can pull the *active* palette (dark or
-/// light) instead of hardcoding one brightness.
-///
-/// Usage in widgets: `context.colors.primary`, `context.colors.textPrimary`, etc.
+// All the custom color roles the app uses beyond Flutter's standard
+// ColorScheme (text tiers, ghost borders, tonal surface steps). Registered
+// as a ThemeExtension so screens can pull the *active* palette (dark or
+// light) instead of hardcoding one brightness.
+//
+// Usage in widgets: `context.colors.primary`, `context.colors.textPrimary`, etc.
 @immutable
 class AppPalette extends ThemeExtension<AppPalette> {
   const AppPalette({
@@ -47,7 +47,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
   final Color textPrimary;
   final Color textSecondary;
 
-  /// Ported 1:1 from Design.md ("Obsidian Velocity" — Full Black / OLED).
+  // Ported 1:1 from Design.md ("Obsidian Velocity" — Full Black / OLED).
   static const dark = AppPalette(
     background: Color(0xFF000000),
     surfaceContainer: Color(0xFF121212), // Level 1 cards
@@ -68,9 +68,9 @@ class AppPalette extends ThemeExtension<AppPalette> {
     textSecondary: Color(0xFF94A3B8),
   );
 
-  /// Design.md only specifies the dark theme. These are derived from the
-  /// same brand hues using Design.md's Material 3 "fixed" tokens, which
-  /// are built to stay legible across both light and dark surfaces.
+  // Design.md only specifies the dark theme. These are derived from the
+  // same brand hues using Design.md's Material 3 "fixed" tokens, which
+  // are built to stay legible across both light and dark surfaces.
   static const light = AppPalette(
     background: Color(0xFFFFFFFF),
     surfaceContainer: Color(0xFFF7F7F8),
@@ -182,8 +182,8 @@ class AppPalette extends ThemeExtension<AppPalette> {
   }
 }
 
-/// Shorthand: `context.colors.primary` instead of
-/// `Theme.of(context).extension<AppPalette>()!.primary`.
+// Shorthand: `context.colors.primary` instead of
+// `Theme.of(context).extension<AppPalette>()!.primary`.
 extension AppPaletteContext on BuildContext {
   AppPalette get colors => Theme.of(this).extension<AppPalette>()!;
 }

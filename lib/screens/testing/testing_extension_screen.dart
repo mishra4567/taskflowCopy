@@ -1,8 +1,8 @@
-/// screens/testing/testing_extension_screen.dart
-///
-/// Placeholder for the Contacts/Testing extension while the real
-/// implementation is on hold. onBack stays nullable so this screen keeps
-/// working whether or not a caller has a "previous page" to return to.
+// screens/testing/testing_extension_screen.dart
+//
+// Placeholder for the Contacts/Testing extension while the real
+// implementation is on hold. onBack stays nullable so this screen keeps
+// working whether or not a caller has a "previous page" to return to.
 import 'package:flutter/material.dart';
 
 import '../../theme/app_palette.dart';
@@ -55,12 +55,12 @@ class TestingExtensionScreen extends StatelessWidget {
   }
 }
 
-/// Registers "Add Contact" as a quick-add card. [onTap] is nullable on
-/// purpose: call this now with no argument to get a working card that
-/// tells the user the feature is coming soon, and later — once a real
-/// add-contact flow exists — call it again passing a real callback. The
-/// call site (e.g. MainShell.initState) doesn't need to change either
-/// way, just the argument.
+// Registers "Add Contact" as a quick-add card. [onTap] is nullable on
+// purpose: call this now with no argument to get a working card that
+// tells the user the feature is coming soon, and later — once a real
+// add-contact flow exists — call it again passing a real callback. The
+// call site (e.g. MainShell.initState) doesn't need to change either
+// way, just the argument.
 void registerQuickAddContact({void Function(BuildContext context)? onTap}) {
   QuickAddRegistry.register(
     QuickAddAction(

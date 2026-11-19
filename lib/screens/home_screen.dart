@@ -7,9 +7,9 @@ import '../theme/app_palette.dart';
 import '../theme/app_tokens.dart';
 import '../theme/app_typography.dart';
 
-/// Home page — the entry list of built-in modules (TODO list, Calendar,
-/// TODO Roadmap) plus a card per installed extension, driven entirely by
-/// that extension's own manifest — no per-extension special casing here.
+// Home page — the entry list of built-in modules (TODO list, Calendar,
+// TODO Roadmap) plus a card per installed extension, driven entirely by
+// that extension's own manifest — no per-extension special casing here.
 class HomeScreen extends StatefulWidget {
   const HomeScreen({
     super.key,
@@ -21,20 +21,20 @@ class HomeScreen extends StatefulWidget {
     required this.onOpenExtension,
   });
 
-  /// Calendar lives on the bottom nav, so tapping its card here switches
-  /// the shell's active tab instead of pushing a new route.
+  // Calendar lives on the bottom nav, so tapping its card here switches
+  // the shell's active tab instead of pushing a new route.
   final VoidCallback onOpenCalendar;
 
-  /// TODO, Testing, and any installed extension all render inside the
-  /// shell now (so the bottom nav stays visible on them), so every one
-  /// of these cards switches tabs rather than pushing a route.
+  // TODO, Testing, and any installed extension all render inside the
+  // shell now (so the bottom nav stays visible on them), so every one
+  // of these cards switches tabs rather than pushing a route.
   final VoidCallback onOpenTodo;
   final VoidCallback onOpenTesting;
   final VoidCallback onOpenContact;
   final VoidCallback onOpenSpending;
 
-  /// Opens the generic extension-runner tab for one installed extension,
-  /// identified by its manifest type + display name.
+  // Opens the generic extension-runner tab for one installed extension,
+  // identified by its manifest type + display name.
   final void Function(String extensionType, String title) onOpenExtension;
 
   @override
@@ -159,7 +159,7 @@ class _HomeScreenState extends State<HomeScreen> {
           subtitle: 'Product V2 · 45% complete',
           trailing: _ProgressBadge(percent: 0.45, color: colors.primary),
 
-          /// onTap: () => _navigateAndRefresh(const RoadmapScreen()),
+          // onTap: () => _navigateAndRefresh(const RoadmapScreen()),
         ),
 
         // One card per installed extension, driven entirely by that

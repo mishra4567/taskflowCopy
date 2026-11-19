@@ -1,10 +1,10 @@
 // services/money
 
-/// Formats whole paise as rupees with Indian digit grouping:
-/// 25000 -> ₹250, 12345678 -> ₹1,23,456.78, -5050 -> -₹50.50.
-///
-/// Money in this app is always an int number of paise (₹12.50 = 1250),
-/// never a double, so adding up a month of expenses is exact.
+// Formats whole paise as rupees with Indian digit grouping:
+// 25000 -> ₹250, 12345678 -> ₹1,23,456.78, -5050 -> -₹50.50.
+//
+// Money in this app is always an int number of paise (₹12.50 = 1250),
+// never a double, so adding up a month of expenses is exact.
 String formatRupees(int paise) {
   final negative = paise < 0;
   final abs = paise.abs();
@@ -14,7 +14,7 @@ String formatRupees(int paise) {
   return '${negative ? '-' : ''}₹${_groupIndian(rupees.toString())}$fraction';
 }
 
-/// 1234567 -> "12,34,567": the last three digits, then pairs.
+// 1234567 -> "12,34,567": the last three digits, then pairs.
 String _groupIndian(String digits) {
   if (digits.length <= 3) return digits;
   final lastThree = digits.substring(digits.length - 3);
@@ -28,9 +28,9 @@ String _groupIndian(String digits) {
   return '${groups.join(',')},$lastThree';
 }
 
-/// Parses what a person types into an amount field — "250", "1,250.5",
-/// "₹99.99", "Rs 40" — into whole paise. Null if it isn't a plain
-/// amount (no digits, more than two decimals, a stray letter, ...).
+// Parses what a person types into an amount field — "250", "1,250.5",
+// "₹99.99", "Rs 40" — into whole paise. Null if it isn't a plain
+// amount (no digits, more than two decimals, a stray letter, ...).
 int? parseRupeesToPaise(String input) {
   final cleaned = input.replaceAll(
     RegExp(r'[₹,\s]|rs\.?|inr', caseSensitive: false),
@@ -45,9 +45,9 @@ int? parseRupeesToPaise(String input) {
       (fraction.isEmpty ? 0 : int.parse(fraction));
 }
 
-/// Paise back to what the amount field should show: 25000 -> "250",
-/// 9950 -> "99.50". No ₹ and no grouping, so it round-trips through
-/// [parseRupeesToPaise].
+// Paise back to what the amount field should show: 25000 -> "250",
+// 9950 -> "99.50". No ₹ and no grouping, so it round-trips through
+// [parseRupeesToPaise].
 String paiseToInput(int paise) {
   final rupees = paise ~/ 100;
   final rem = paise % 100;

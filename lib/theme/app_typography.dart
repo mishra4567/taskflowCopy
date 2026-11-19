@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// Typography scale from Design.md:
-/// - Hanken Grotesk for headlines (architectural, bold)
-/// - Inter for body copy (high legibility)
-/// - Geist for labels / mono utility text (system-level feel)
-///
-/// These styles are intentionally colorless — apply color at the call site
-/// via `.copyWith(color: context.colors.textPrimary)` (or similar) so text
-/// responds correctly to the active theme (dark/light).
+// Typography scale from Design.md:
+// - Hanken Grotesk for headlines (architectural, bold)
+// - Inter for body copy (high legibility)
+// - Geist for labels / mono utility text (system-level feel)
+//
+// These styles are intentionally colorless — apply color at the call site
+// via `.copyWith(color: context.colors.textPrimary)` (or similar) so text
+// responds correctly to the active theme (dark/light).
 class AppTypography {
   AppTypography._();
 

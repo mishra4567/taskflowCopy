@@ -1,14 +1,14 @@
-/// screens/contactscreen/contact_screen.dart
-///
-/// Contacts — a plain built-in screen backed by AppDatabase's own
-/// `contacts` table (data/tables/contacts_table.dart), not an extension.
-/// The list is a live Drift stream, so adding or deleting a contact from
-/// anywhere (this screen, the quick-add sheet, a backup restore) updates
-/// it by itself with no refresh plumbing.
-///
-/// Lives inside MainShell rather than being pushed over it, so the
-/// bottom nav stays visible — hence `onBack` instead of Navigator.pop,
-/// and its own AppBar since the shell hides its bar for this page.
+// screens/contactscreen/contact_screen.dart
+//
+// Contacts — a plain built-in screen backed by AppDatabase's own
+// `contacts` table (data/tables/contacts_table.dart), not an extension.
+// The list is a live Drift stream, so adding or deleting a contact from
+// anywhere (this screen, the quick-add sheet, a backup restore) updates
+// it by itself with no refresh plumbing.
+//
+// Lives inside MainShell rather than being pushed over it, so the
+// bottom nav stays visible — hence `onBack` instead of Navigator.pop,
+// and its own AppBar since the shell hides its bar for this page.
 import 'package:flutter/material.dart';
 
 import '../../data/app_database.dart';
@@ -21,8 +21,8 @@ import '../../widgets/quick_add/quick_add_sheet.dart'
 class ContactScreen extends StatefulWidget {
   const ContactScreen({super.key, this.onBack});
 
-  /// Null when there's no previous page to return to — no back arrow is
-  /// shown at all then, rather than one wired to nothing.
+  // Null when there's no previous page to return to — no back arrow is
+  // shown at all then, rather than one wired to nothing.
   final VoidCallback? onBack;
 
   @override
@@ -126,9 +126,9 @@ class _ContactScreenState extends State<ContactScreen> {
   }
 }
 
-/// Opens the add-contact bottom sheet — used by this screen's AppBar
-/// button and by the quick-add sheet's "Add Contact" card, so there is
-/// one form, not two copies that can drift apart.
+// Opens the add-contact bottom sheet — used by this screen's AppBar
+// button and by the quick-add sheet's "Add Contact" card, so there is
+// one form, not two copies that can drift apart.
 Future<void> showAddContactDialog(BuildContext context) {
   return showModalBottomSheet<void>(
     context: context,
@@ -138,8 +138,8 @@ Future<void> showAddContactDialog(BuildContext context) {
   );
 }
 
-/// Add-contact form, styled to match the quick-add sheet (same
-/// rounded-top container, drag handle and title treatment).
+// Add-contact form, styled to match the quick-add sheet (same
+// rounded-top container, drag handle and title treatment).
 class _AddContactSheet extends StatefulWidget {
   const _AddContactSheet();
 
@@ -320,8 +320,8 @@ class _AddContactSheetState extends State<_AddContactSheet> {
   }
 }
 
-/// Registers "Add Contact" as a quick-add card. Call once, from
-/// MainShell's initState.
+// Registers "Add Contact" as a quick-add card. Call once, from
+// MainShell's initState.
 void registerQuickAddContact() {
   QuickAddRegistry.register(
     QuickAddAction(

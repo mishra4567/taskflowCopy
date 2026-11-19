@@ -1,8 +1,8 @@
-/// data/daos/extension_queries.dart
+// data/daos/extension_queries.dart
 import '../app_database.dart';
 
-/// Extension manifest + extension-record query methods, kept in their
-/// own file for the same reason as TodoQueries — one file per concern.
+// Extension manifest + extension-record query methods, kept in their
+// own file for the same reason as TodoQueries — one file per concern.
 extension ExtensionQueries on AppDatabase {
   // ---- Extensions (installed manifests + files) --------------------
 

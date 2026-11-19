@@ -5,13 +5,13 @@ import 'package:flutter/foundation.dart';
 
 import '../../data/app_database.dart';
 
-/// Contacts as plain maps, for the backup JSON's top-level `contacts`
-/// key. Add it where the export builds its map:
-///
-///   'contacts': await exportContacts(),
-///
-/// (createdAt is milliseconds since epoch, the same as every other date
-/// in the backup file.)
+// Contacts as plain maps, for the backup JSON's top-level `contacts`
+// key. Add it where the export builds its map:
+//
+//   'contacts': await exportContacts(),
+//
+// (createdAt is milliseconds since epoch, the same as every other date
+// in the backup file.)
 Future<List<Map<String, dynamic>>> exportContacts() async {
   final all = await AppDatabase.instance.getAllContacts();
   return [
@@ -37,17 +37,17 @@ String _text(Object? value) => value == null ? '' : '$value'.trim();
 DateTime? _date(Object? value) =>
     value is int ? DateTime.fromMillisecondsSinceEpoch(value) : null;
 
-/// Restores contacts from a decoded taskflow_backup.json ([backup] is the
-/// whole map). Reads two places, so both new and old backups work:
-/// - `contacts`: the current format, written by [exportContacts].
-/// - `extensionRecords` entries of type 'contacts': how backups made
-///   before contacts got their own table stored them (payload is a JSON
-///   string with firstName / secondName / number).
-///
-/// A contact that already exists (same first name, second name and
-/// number) is skipped, so restoring the same backup twice doesn't
-/// duplicate everyone. Returns how many were added, and prints one
-/// summary line to the debug console.
+// Restores contacts from a decoded taskflow_backup.json ([backup] is the
+// whole map). Reads two places, so both new and old backups work:
+// - `contacts`: the current format, written by [exportContacts].
+// - `extensionRecords` entries of type 'contacts': how backups made
+//   before contacts got their own table stored them (payload is a JSON
+//   string with firstName / secondName / number).
+//
+// A contact that already exists (same first name, second name and
+// number) is skipped, so restoring the same backup twice doesn't
+// duplicate everyone. Returns how many were added, and prints one
+// summary line to the debug console.
 Future<int> restoreContacts(Map<dynamic, dynamic> backup) async {
   final incoming = <_Incoming>[];
 

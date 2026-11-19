@@ -3,12 +3,12 @@ import 'package:drift/drift.dart' show Value;
 import 'package:flutter/foundation.dart';
 import 'package:taskflow/data/app_database.dart';
 
-/// Expenses as plain maps for taskflow_backup.json's "expenses" list.
-///
-/// Row ids are deliberately NOT exported: they're autoincrement numbers
-/// that mean nothing on another phone, and restore assigns fresh ones
-/// (so restoring onto a phone that already has payments can't hit a
-/// primary-key conflict).
+// Expenses as plain maps for taskflow_backup.json's "expenses" list.
+//
+// Row ids are deliberately NOT exported: they're autoincrement numbers
+// that mean nothing on another phone, and restore assigns fresh ones
+// (so restoring onto a phone that already has payments can't hit a
+// primary-key conflict).
 Future<List<Map<String, dynamic>>> exportExpenses() async {
   final rows = await AppDatabase.instance.getAllExpenses();
   return [
@@ -28,19 +28,19 @@ Future<List<Map<String, dynamic>>> exportExpenses() async {
   ];
 }
 
-/// Restores the "expenses" list from a decoded backup. [raw] is
-/// `data['expenses']`; null means an older backup with no expenses
-/// section. Returns how many payments were actually added.
-///
-/// Merges, never overwrites:
-/// - A payment with a UPI reference is skipped if that reference is
-///   already saved (same reference = same payment).
-/// - A payment without one (cash, typed by hand) is skipped if the phone
-///   already has one with the same amount, time, payee and direction.
-///   Matching is by COUNT: if the backup holds two identical payments
-///   and the phone holds one, one is added — so restoring the same file
-///   twice adds nothing, but two genuinely identical payments survive.
-/// Must run inside BackupService.restore's transaction.
+// Restores the "expenses" list from a decoded backup. [raw] is
+// `data['expenses']`; null means an older backup with no expenses
+// section. Returns how many payments were actually added.
+//
+// Merges, never overwrites:
+// - A payment with a UPI reference is skipped if that reference is
+//   already saved (same reference = same payment).
+// - A payment without one (cash, typed by hand) is skipped if the phone
+//   already has one with the same amount, time, payee and direction.
+//   Matching is by COUNT: if the backup holds two identical payments
+//   and the phone holds one, one is added — so restoring the same file
+//   twice adds nothing, but two genuinely identical payments survive.
+// Must run inside BackupService.restore's transaction.
 Future<int> restoreExpenses(Object? raw) async {
   if (raw == null) return 0;
   if (raw is! List) {
@@ -136,9 +136,9 @@ Future<int> restoreExpenses(Object? raw) async {
   return added;
 }
 
-/// Seconds, not milliseconds: the database stores DateTime as whole
-/// seconds, so a payment read back from it has no milliseconds, and the
-/// backup's value must be compared at the same precision.
+// Seconds, not milliseconds: the database stores DateTime as whole
+// seconds, so a payment read back from it has no milliseconds, and the
+// backup's value must be compared at the same precision.
 String _signature(int amountPaise, DateTime paidAt, String payee, String dir) =>
     '$amountPaise|${paidAt.millisecondsSinceEpoch ~/ 1000}|$payee|$dir';
 

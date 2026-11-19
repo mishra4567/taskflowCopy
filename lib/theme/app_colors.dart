@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-/// Color tokens ported 1:1 from Design.md ("Obsidian Velocity").
-/// Background is kept strictly pure black (#000000) per the design doc's
-/// "Full Black / OLED-optimized" spec, even though other surface levels
-/// use the softer #121212 / #1e1e1e tones for tonal layering.
+// Color tokens ported 1:1 from Design.md ("Obsidian Velocity").
+// Background is kept strictly pure black (#000000) per the design doc's
+// "Full Black / OLED-optimized" spec, even though other surface levels
+// use the softer #121212 / #1e1e1e tones for tonal layering.
 class AppColors {
   AppColors._();
 

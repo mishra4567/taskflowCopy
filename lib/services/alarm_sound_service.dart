@@ -8,10 +8,10 @@ import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// The sound alarms ring with. [uri] is what Android's notification
-/// channel plays: either the system default alarm tone, or a content://
-/// URI for a file the user uploaded (saved into the phone's
-/// Alarms/TaskFlow folder by MainActivity.kt).
+// The sound alarms ring with. [uri] is what Android's notification
+// channel plays: either the system default alarm tone, or a content://
+// URI for a file the user uploaded (saved into the phone's
+// Alarms/TaskFlow folder by MainActivity.kt).
 class AlarmSound {
   const AlarmSound({
     required this.uri,
@@ -24,18 +24,18 @@ class AlarmSound {
   final String name;
   final bool isCustom;
 
-  /// True only for a file this app itself copied into MediaStore (via
-  /// [AlarmSoundService.pickAndImport]) — the one case where it's safe
-  /// to delete the underlying file when the person switches away from
-  /// it. A sound chosen via the system ringtone picker
-  /// ([AlarmSoundService.pickSystemRingtone]) or one of the bundled
-  /// built-in sounds points at a file this app doesn't own (a system
-  /// sound, or something baked into the APK), so it's never deleted
-  /// even though it's just as "custom".
+  // True only for a file this app itself copied into MediaStore (via
+  // [AlarmSoundService.pickAndImport]) — the one case where it's safe
+  // to delete the underlying file when the person switches away from
+  // it. A sound chosen via the system ringtone picker
+  // ([AlarmSoundService.pickSystemRingtone]) or one of the bundled
+  // built-in sounds points at a file this app doesn't own (a system
+  // sound, or something baked into the APK), so it's never deleted
+  // even though it's just as "custom".
   final bool ownedByApp;
 
-  /// Whatever the phone's own "alarm" ringtone is set to — no asset to
-  /// bundle, and it always exists.
+  // Whatever the phone's own "alarm" ringtone is set to — no asset to
+  // bundle, and it always exists.
   static const defaultSound = AlarmSound(
     uri: 'content://settings/system/alarm_alert',
     name: 'Default alarm sound',
@@ -43,14 +43,14 @@ class AlarmSound {
   );
 }
 
-/// One sound bundled as a Flutter asset (declared under `assets:` in
-/// pubspec.yaml, e.g. assets/sounds/chime.wav). A Flutter asset has no
-/// Uri the OS's notification system can resolve a playable sound from —
-/// it only exists inside the asset bundle, not as a regular file — so
-/// each one is copied into MediaStore the first time it's picked (via
-/// the same native "import" channel method [AlarmSoundService.
-/// pickAndImport] already uses for an uploaded file) to get a real
-/// content:// uri. [displayName] is derived from the filename.
+// One sound bundled as a Flutter asset (declared under `assets:` in
+// pubspec.yaml, e.g. assets/sounds/chime.wav). A Flutter asset has no
+// Uri the OS's notification system can resolve a playable sound from —
+// it only exists inside the asset bundle, not as a regular file — so
+// each one is copied into MediaStore the first time it's picked (via
+// the same native "import" channel method [AlarmSoundService.
+// pickAndImport] already uses for an uploaded file) to get a real
+// content:// uri. [displayName] is derived from the filename.
 class BuiltInSoundAsset {
   const BuiltInSoundAsset({required this.assetPath, required this.displayName});
 
@@ -58,16 +58,16 @@ class BuiltInSoundAsset {
   final String displayName;
 }
 
-/// How long a snoozed alarm waits before ringing again. A fixed set of
-/// options (rather than a free-entry number field) keeps the picker a
-/// row of tappable chips instead of a keyboard — the same tradeoff the
-/// Priority chips elsewhere in the app already make.
+// How long a snoozed alarm waits before ringing again. A fixed set of
+// options (rather than a free-entry number field) keeps the picker a
+// row of tappable chips instead of a keyboard — the same tradeoff the
+// Priority chips elsewhere in the app already make.
 const snoozeOptions = <int>[5, 10, 15, 20, 30];
 
-/// Owns the user's alarm-sound choice and snooze duration: persists
-/// both, imports uploaded files, and plays a short preview. A
-/// ChangeNotifier so the settings tile (and the task form's rows)
-/// rebuild when either changes.
+// Owns the user's alarm-sound choice and snooze duration: persists
+// both, imports uploaded files, and plays a short preview. A
+// ChangeNotifier so the settings tile (and the task form's rows)
+// rebuild when either changes.
 class AlarmSoundService extends ChangeNotifier {
   AlarmSoundService._();
   static final AlarmSoundService instance = AlarmSoundService._();
@@ -93,7 +93,7 @@ class AlarmSoundService extends ChangeNotifier {
 
   Future<void>? _loadFuture;
 
-  /// Safe to call repeatedly; reads saved prefs once.
+  // Safe to call repeatedly; reads saved prefs once.
   Future<void> load() => _loadFuture ??= _load();
 
   Future<void> _load() async {
@@ -121,11 +121,11 @@ class AlarmSoundService extends ChangeNotifier {
     await validateCurrent();
   }
 
-  /// True if [uri] can still be opened. The phone's own default-sound
-  /// pointer (content://settings/...) is always treated as present, and
-  /// a failure of the check itself (e.g. the native side unavailable)
-  /// counts as "present" too — wrongly discarding a working sound is a
-  /// worse outcome than keeping a doubtful one.
+  // True if [uri] can still be opened. The phone's own default-sound
+  // pointer (content://settings/...) is always treated as present, and
+  // a failure of the check itself (e.g. the native side unavailable)
+  // counts as "present" too — wrongly discarding a working sound is a
+  // worse outcome than keeping a doubtful one.
   Future<bool> _uriExists(String uri) async {
     try {
       return await _channel.invokeMethod<bool>('exists', {'uri': uri}) ?? true;
@@ -134,11 +134,11 @@ class AlarmSoundService extends ChangeNotifier {
     }
   }
 
-  /// If the chosen sound's file is gone, quietly falls back to the
-  /// default alarm sound instead of leaving a dead URI in place — that
-  /// URI otherwise reaches a notification channel and the preview
-  /// player, which fail with "FileNotFoundException: No item at
-  /// content://media/...". Cheap enough to call before scheduling.
+  // If the chosen sound's file is gone, quietly falls back to the
+  // default alarm sound instead of leaving a dead URI in place — that
+  // URI otherwise reaches a notification channel and the preview
+  // player, which fail with "FileNotFoundException: No item at
+  // content://media/...". Cheap enough to call before scheduling.
   Future<void> validateCurrent() async {
     final sound = _current;
     if (!sound.isCustom) return;
@@ -147,11 +147,11 @@ class AlarmSoundService extends ChangeNotifier {
     await _save(AlarmSound.defaultSound);
   }
 
-  /// Built-in sounds are imported into MediaStore once and their uri is
-  /// cached per asset (see [_builtInCachePrefix]). Whenever an imported
-  /// file is deleted or found missing, the cache entry pointing at it
-  /// has to go too — otherwise the next pick of that built-in sound
-  /// reuses the dead uri instead of re-importing the asset.
+  // Built-in sounds are imported into MediaStore once and their uri is
+  // cached per asset (see [_builtInCachePrefix]). Whenever an imported
+  // file is deleted or found missing, the cache entry pointing at it
+  // has to go too — otherwise the next pick of that built-in sound
+  // reuses the dead uri instead of re-importing the asset.
   Future<void> _forgetBuiltInCacheFor(String uri) async {
     final prefs = await SharedPreferences.getInstance();
     for (final key in prefs.getKeys().toList()) {
@@ -161,12 +161,12 @@ class AlarmSoundService extends ChangeNotifier {
     }
   }
 
-  /// Changes how long Snooze waits before an alarm rings again. Takes
-  /// effect for every alarm scheduled after this call — including
-  /// existing pending ones, via the same rescheduleAllAlarms() flow
-  /// AlarmSoundCard's sound changes already trigger (see
-  /// NotificationService.rescheduleAllAlarms's doc for why that's
-  /// necessary rather than automatic).
+  // Changes how long Snooze waits before an alarm rings again. Takes
+  // effect for every alarm scheduled after this call — including
+  // existing pending ones, via the same rescheduleAllAlarms() flow
+  // AlarmSoundCard's sound changes already trigger (see
+  // NotificationService.rescheduleAllAlarms's doc for why that's
+  // necessary rather than automatic).
   Future<void> setSnoozeMinutes(int minutes) async {
     if (!snoozeOptions.contains(minutes) || minutes == _snoozeMinutes) return;
     final prefs = await SharedPreferences.getInstance();
@@ -190,9 +190,9 @@ class AlarmSoundService extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Lets the user pick an audio file and makes it the alarm sound.
-  /// [error] is a message to show the user; null with [changed] false
-  /// just means they cancelled the picker.
+  // Lets the user pick an audio file and makes it the alarm sound.
+  // [error] is a message to show the user; null with [changed] false
+  // just means they cancelled the picker.
   Future<({bool changed, String? error})> pickAndImport() async {
     await stopPreview();
     // file_picker 12+ dropped the FilePicker.platform / FilePickerResult
@@ -236,12 +236,12 @@ class AlarmSoundService extends ChangeNotifier {
     }
   }
 
-  /// Opens Android's own ringtone picker (RingtoneManager.ACTION_RINGTONE_
-  /// PICKER, filtered to TYPE_ALARM) — the same UI the phone's own
-  /// Settings app uses, so the person can choose from whatever alarm
-  /// sounds already exist on the device instead of only ones they upload
-  /// themselves. MainActivity.kt owns the actual Activity-result dance;
-  /// this just awaits the single method-channel call.
+  // Opens Android's own ringtone picker (RingtoneManager.ACTION_RINGTONE_
+  // PICKER, filtered to TYPE_ALARM) — the same UI the phone's own
+  // Settings app uses, so the person can choose from whatever alarm
+  // sounds already exist on the device instead of only ones they upload
+  // themselves. MainActivity.kt owns the actual Activity-result dance;
+  // this just awaits the single method-channel call.
   Future<({bool changed, String? error})> pickSystemRingtone() async {
     await stopPreview();
     try {
@@ -273,27 +273,27 @@ class AlarmSoundService extends ChangeNotifier {
     }
   }
 
-  /// Folders (relative to pubspec.yaml's `assets:` list) the built-in
-  /// sound catalog is read from. Every asset directly under any of these
-  /// paths becomes one selectable built-in sound — declare the folder
-  /// (not each file individually) under `assets:` in pubspec.yaml, add
-  /// it to this list if it's a new folder, and files inside it show up
-  /// automatically with no other code changes. Safe to list a folder
-  /// that doesn't exist yet or is empty — it just contributes nothing.
+  // Folders (relative to pubspec.yaml's `assets:` list) the built-in
+  // sound catalog is read from. Every asset directly under any of these
+  // paths becomes one selectable built-in sound — declare the folder
+  // (not each file individually) under `assets:` in pubspec.yaml, add
+  // it to this list if it's a new folder, and files inside it show up
+  // automatically with no other code changes. Safe to list a folder
+  // that doesn't exist yet or is empty — it just contributes nothing.
   static const _builtInAssetFolders = ['assets/sounds/', 'assets/systemSound/'];
 
-  /// taskflow_builtin_uri_<assetPath> -> an already-imported content://
-  /// uri for that asset, so picking the same built-in sound twice reuses
-  /// the existing MediaStore copy instead of re-importing it every time.
+  // taskflow_builtin_uri_<assetPath> -> an already-imported content://
+  // uri for that asset, so picking the same built-in sound twice reuses
+  // the existing MediaStore copy instead of re-importing it every time.
   static const _builtInCachePrefix = 'taskflow_builtin_uri_';
 
   List<BuiltInSoundAsset>? _builtInCache;
 
-  /// Lists the app's bundled sound catalog by reading Flutter's asset
-  /// manifest for everything under [_builtInAssetFolder] — so the list
-  /// shown in Settings/the task sheet always matches whatever's actually
-  /// bundled, without a second hardcoded list to keep in sync. Cached
-  /// after the first call since the manifest never changes at runtime.
+  // Lists the app's bundled sound catalog by reading Flutter's asset
+  // manifest for everything under [_builtInAssetFolder] — so the list
+  // shown in Settings/the task sheet always matches whatever's actually
+  // bundled, without a second hardcoded list to keep in sync. Cached
+  // after the first call since the manifest never changes at runtime.
   Future<List<BuiltInSoundAsset>> listBuiltInSoundAssets() async {
     final cached = _builtInCache;
     if (cached != null) return cached;
@@ -324,13 +324,13 @@ class AlarmSoundService extends ChangeNotifier {
     return result;
   }
 
-  /// Selects one of the app's bundled sounds. The first time a given
-  /// asset is picked, its bytes are copied out to a temp file and handed
-  /// to the same native "import" channel method [pickAndImport] uses, so
-  /// it ends up as a real MediaStore entry the notification system can
-  /// resolve a sound from — a bare Flutter asset path can't be used
-  /// directly. The resulting uri is cached (see [_builtInCachePrefix])
-  /// so picking the same built-in sound again later is instant.
+  // Selects one of the app's bundled sounds. The first time a given
+  // asset is picked, its bytes are copied out to a temp file and handed
+  // to the same native "import" channel method [pickAndImport] uses, so
+  // it ends up as a real MediaStore entry the notification system can
+  // resolve a sound from — a bare Flutter asset path can't be used
+  // directly. The resulting uri is cached (see [_builtInCachePrefix])
+  // so picking the same built-in sound again later is instant.
   Future<({bool changed, String? error})> selectBuiltInAsset(
     BuiltInSoundAsset asset,
   ) async {
@@ -418,8 +418,8 @@ class AlarmSoundService extends ChangeNotifier {
     await _forgetBuiltInCacheFor(uri);
   }
 
-  /// Plays the current sound for a few seconds. Returns an error message
-  /// if it couldn't be played.
+  // Plays the current sound for a few seconds. Returns an error message
+  // if it couldn't be played.
   Future<String?> preview() async {
     final before = _current;
     await validateCurrent();

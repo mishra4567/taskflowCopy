@@ -48,8 +48,8 @@ const _notifications = [
   ),
 ];
 
-/// Pushed from the bell icon in the top bar — not part of the bottom nav,
-/// so it gets its own Scaffold with a back-arrow AppBar.
+// Pushed from the bell icon in the top bar — not part of the bottom nav,
+// so it gets its own Scaffold with a back-arrow AppBar.
 class NotificationsScreen extends StatelessWidget {
   const NotificationsScreen({super.key});
 
@@ -79,8 +79,7 @@ class NotificationsScreen extends StatelessWidget {
                 AppSpacing.xl,
               ),
               itemCount: _notifications.length,
-              separatorBuilder: (_, _) =>
-                  const SizedBox(height: AppSpacing.sm),
+              separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.sm),
               itemBuilder: (context, i) =>
                   _NotificationCard(item: _notifications[i]),
             ),

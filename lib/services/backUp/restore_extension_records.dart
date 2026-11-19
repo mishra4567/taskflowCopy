@@ -5,29 +5,29 @@ import 'package:flutter/foundation.dart';
 
 import '../../data/app_database.dart';
 
-/// Restores the `extensionRecords` list from a taskflow_backup.json —
-/// this is where saved contacts live (extensionType 'contacts', one row
-/// per contact, payload = a JSON string like
-/// {"number":"...","firstName":"...","secondName":"..."}).
-///
-/// [raw] is `data['extensionRecords']` from the decoded backup. Returns
-/// how many records were actually added, so the caller can show
-/// "Restored 14 tasks and 2 contacts".
-///
-/// Deliberately uses only AppDatabase.getExtensionRecords /
-/// addExtensionRecord — the same two calls the Contacts screen already
-/// uses to read and save a contact — instead of inserting rows with
-/// their backed-up ids:
-/// - A fresh row id is assigned, so restoring onto a phone that already
-///   has rows 1 and 2 can't fail with a primary-key conflict.
-/// - A record whose type + payload already exists is skipped, so
-///   restoring the same backup twice doesn't duplicate every contact.
-/// The one thing not carried over is each record's original createdAt;
-/// restored contacts are stamped with the restore time.
-///
-/// Prints one summary line to the debug console saying exactly what
-/// happened to every record (added / already present / unreadable), so
-/// "restored 0" is never ambiguous.
+// Restores the `extensionRecords` list from a taskflow_backup.json —
+// this is where saved contacts live (extensionType 'contacts', one row
+// per contact, payload = a JSON string like
+// {"number":"...","firstName":"...","secondName":"..."}).
+//
+// [raw] is `data['extensionRecords']` from the decoded backup. Returns
+// how many records were actually added, so the caller can show
+// "Restored 14 tasks and 2 contacts".
+//
+// Deliberately uses only AppDatabase.getExtensionRecords /
+// addExtensionRecord — the same two calls the Contacts screen already
+// uses to read and save a contact — instead of inserting rows with
+// their backed-up ids:
+// - A fresh row id is assigned, so restoring onto a phone that already
+//   has rows 1 and 2 can't fail with a primary-key conflict.
+// - A record whose type + payload already exists is skipped, so
+//   restoring the same backup twice doesn't duplicate every contact.
+// The one thing not carried over is each record's original createdAt;
+// restored contacts are stamped with the restore time.
+//
+// Prints one summary line to the debug console saying exactly what
+// happened to every record (added / already present / unreadable), so
+// "restored 0" is never ambiguous.
 Future<int> restoreExtensionRecords(Object? raw) async {
   if (raw is! List) {
     debugPrint(

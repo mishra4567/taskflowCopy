@@ -11,30 +11,30 @@ import '../models/todo_task.dart';
 import 'alarm_sound_service.dart';
 import 'permission_service.dart';
 
-/// Builds the alarm notification's Snooze/Dismiss actions for a given
-/// snooze length. A top-level function rather than a class member (even
-/// though NotificationService._scheduleAlarmEdge is the main caller) so
-/// [handleAlarmAction] — which runs in an isolate with no access to
-/// NotificationService.instance — can build an identical action list
-/// when it re-schedules a snoozed alarm, from nothing but the minutes
-/// value carried in the payload. The label can't be a compile-time
-/// const anymore now that the duration is user-configurable (see
-/// AlarmSoundService.snoozeMinutes), unlike the fixed-10-minute version
-/// this replaces.
-/// An unattended alarm keeps ringing every [AlarmSoundService.
-/// snoozeMinutes] for up to this many minutes total before it just stops
-/// on its own — a safety ceiling, not something the person configures.
-/// Without one, a forgotten/undismissed alarm on a 5-minute interval
-/// would otherwise keep firing indefinitely, forever.
+// Builds the alarm notification's Snooze/Dismiss actions for a given
+// snooze length. A top-level function rather than a class member (even
+// though NotificationService._scheduleAlarmEdge is the main caller) so
+// [handleAlarmAction] — which runs in an isolate with no access to
+// NotificationService.instance — can build an identical action list
+// when it re-schedules a snoozed alarm, from nothing but the minutes
+// value carried in the payload. The label can't be a compile-time
+// const anymore now that the duration is user-configurable (see
+// AlarmSoundService.snoozeMinutes), unlike the fixed-10-minute version
+// this replaces.
+// An unattended alarm keeps ringing every [AlarmSoundService.
+// snoozeMinutes] for up to this many minutes total before it just stops
+// on its own — a safety ceiling, not something the person configures.
+// Without one, a forgotten/undismissed alarm on a 5-minute interval
+// would otherwise keep firing indefinitely, forever.
 const _autoRepeatWindowMinutes = 60;
 
-/// Hard cap on how many occurrences get pre-scheduled per alarm batch,
-/// regardless of interval (a 1-minute interval would otherwise want 60
-/// occurrences for the window above). Also used as the fixed range
-/// cancelled on Dismiss/Snooze — see [handleAlarmAction] and
-/// NotificationService._cancelAlarmEdge — since the actual count used at
-/// schedule time isn't necessarily known later if the snooze duration
-/// setting changed in between.
+// Hard cap on how many occurrences get pre-scheduled per alarm batch,
+// regardless of interval (a 1-minute interval would otherwise want 60
+// occurrences for the window above). Also used as the fixed range
+// cancelled on Dismiss/Snooze — see [handleAlarmAction] and
+// NotificationService._cancelAlarmEdge — since the actual count used at
+// schedule time isn't necessarily known later if the snooze duration
+// setting changed in between.
 const _maxAutoRepeatOccurrences = 24;
 
 int _autoRepeatCountFor(int intervalMinutes) {
@@ -42,15 +42,15 @@ int _autoRepeatCountFor(int intervalMinutes) {
   return count.clamp(1, _maxAutoRepeatOccurrences);
 }
 
-/// Schedules a whole batch of identical alarm occurrences, [intervalMinutes]
-/// apart, starting at [start] — this is what makes an unattended alarm
-/// keep ringing on its own every few minutes instead of showing once and
-/// going silent. Each occurrence is a fully independent system alarm (id
-/// baseId, baseId+1, ... baseId+count-1), so nothing needs to run in
-/// between them for the repeat to happen. A top-level function (not a
-/// NotificationService method) so [handleAlarmAction] — running in a
-/// background isolate with no access to NotificationService.instance —
-/// can call it too, when re-starting the batch after a snooze.
+// Schedules a whole batch of identical alarm occurrences, [intervalMinutes]
+// apart, starting at [start] — this is what makes an unattended alarm
+// keep ringing on its own every few minutes instead of showing once and
+// going silent. Each occurrence is a fully independent system alarm (id
+// baseId, baseId+1, ... baseId+count-1), so nothing needs to run in
+// between them for the repeat to happen. A top-level function (not a
+// NotificationService method) so [handleAlarmAction] — running in a
+// background isolate with no access to NotificationService.instance —
+// can call it too, when re-starting the batch after a snooze.
 Future<void> _scheduleAutoRepeatBatch({
   required FlutterLocalNotificationsPlugin plugin,
   required int baseId,
@@ -106,10 +106,10 @@ Future<void> _scheduleAutoRepeatBatch({
   }
 }
 
-/// Cancels every id in a batch's fixed range — used whenever an alarm
-/// needs to stop entirely (task edited/completed/deleted, or an explicit
-/// Dismiss/Snooze), so no occurrence scheduled further out than the one
-/// actually interacted with is ever left silently pending.
+// Cancels every id in a batch's fixed range — used whenever an alarm
+// needs to stop entirely (task edited/completed/deleted, or an explicit
+// Dismiss/Snooze), so no occurrence scheduled further out than the one
+// actually interacted with is ever left silently pending.
 Future<void> _cancelAutoRepeatBatch(
   FlutterLocalNotificationsPlugin plugin,
   int baseId,
@@ -136,13 +136,13 @@ List<AndroidNotificationAction> _alarmActionsFor(int snoozeMinutes) {
   ];
 }
 
-/// Some Android devices/OEMs still report pre-2005 IANA zone names that
-/// were merged into a canonical zone (e.g. "Asia/Calcutta" ->
-/// "Asia/Kolkata"). `latest.dart`'s data set is the current, much
-/// smaller one and doesn't carry those deprecated aliases — pulling in
-/// `latest_all.dart` to cover a handful of names roughly doubles the
-/// synchronous parse cost at startup, so a small manual map is the
-/// cheaper fix. Extend this if another deprecated name turns up.
+// Some Android devices/OEMs still report pre-2005 IANA zone names that
+// were merged into a canonical zone (e.g. "Asia/Calcutta" ->
+// "Asia/Kolkata"). `latest.dart`'s data set is the current, much
+// smaller one and doesn't carry those deprecated aliases — pulling in
+// `latest_all.dart` to cover a handful of names roughly doubles the
+// synchronous parse cost at startup, so a small manual map is the
+// cheaper fix. Extend this if another deprecated name turns up.
 const _legacyTimezoneAliases = {
   'Asia/Calcutta': 'Asia/Kolkata',
   'Asia/Saigon': 'Asia/Ho_Chi_Minh',
@@ -151,31 +151,31 @@ const _legacyTimezoneAliases = {
   'Europe/Kiev': 'Europe/Kyiv',
 };
 
-/// How a scheduled notification looks. Only [standard] exists today —
-/// this enum is the extension point for "choose a design" later: each
-/// new case gets a branch in [_androidDetailsFor] below, and a settings
-/// screen can eventually just store which one to pass in here. Nothing
-/// about scheduling, permissions, or the call sites in todo_screen.dart /
-/// quick_add_sheet.dart needs to change when that's added.
+// How a scheduled notification looks. Only [standard] exists today —
+// this enum is the extension point for "choose a design" later: each
+// new case gets a branch in [_androidDetailsFor] below, and a settings
+// screen can eventually just store which one to pass in here. Nothing
+// about scheduling, permissions, or the call sites in todo_screen.dart /
+// quick_add_sheet.dart needs to change when that's added.
 enum NotificationStyle { standard }
 
-/// Which edge of a task a notification/alarm is for. A simple task only
-/// ever uses [single]; a task with an end uses [start] and [end], so its
-/// two reminders get distinct ids instead of overwriting each other.
+// Which edge of a task a notification/alarm is for. A simple task only
+// ever uses [single]; a task with an end uses [start] and [end], so its
+// two reminders get distinct ids instead of overwriting each other.
 enum _Edge { single, start, end }
 
-/// Schedules and cancels the reminder notification(s) and alarm(s) tied
-/// to a task.
-///
-/// A task has two independent switches (todo_task_sheet.dart):
-/// - Notification: a normal, quiet reminder on the default channel.
-/// - Alarm: a loud, full-screen ringing alarm on its own channel, using
-///   whatever sound is chosen in Settings (AlarmSoundService) — the
-///   phone's default alarm tone unless the user uploaded one.
-///
-/// Both can be on for the same task; they use separate notification ids
-/// (see [_notificationId]/[_alarmId]) so toggling one never touches the
-/// other's schedule.
+// Schedules and cancels the reminder notification(s) and alarm(s) tied
+// to a task.
+//
+// A task has two independent switches (todo_task_sheet.dart):
+// - Notification: a normal, quiet reminder on the default channel.
+// - Alarm: a loud, full-screen ringing alarm on its own channel, using
+//   whatever sound is chosen in Settings (AlarmSoundService) — the
+//   phone's default alarm tone unless the user uploaded one.
+//
+// Both can be on for the same task; they use separate notification ids
+// (see [_notificationId]/[_alarmId]) so toggling one never touches the
+// other's schedule.
 class NotificationService {
   NotificationService._();
   static final NotificationService instance = NotificationService._();
@@ -187,18 +187,18 @@ class NotificationService {
   static const _channelName = 'Task Reminders';
   static const _channelDescription = 'Reminders for tasks with a due date';
 
-  /// How long a ringing alarm notification stays up (and audible) before
-  /// Android auto-dismisses it if the user never taps it — matches
-  /// AlarmSoundService's own preview length being short, so a forgotten
-  /// alarm doesn't ring forever in the background.
+  // How long a ringing alarm notification stays up (and audible) before
+  // Android auto-dismisses it if the user never taps it — matches
+  // AlarmSoundService's own preview length being short, so a forgotten
+  // alarm doesn't ring forever in the background.
   static const _alarmTimeoutMs = 60000;
 
-  /// A single, reusable Dismiss-only action — for the quiet Notification
-  /// channel, which (unlike Alarm) never snoozes. showsUserInterface:
-  /// false keeps the tap from launching the app; cancelNotification:
-  /// true removes it. The payload set in _scheduleEdge (not this action
-  /// itself) is what lets handleAlarmAction also cancel it explicitly as
-  /// a fallback — see that function's doc for why that fallback exists.
+  // A single, reusable Dismiss-only action — for the quiet Notification
+  // channel, which (unlike Alarm) never snoozes. showsUserInterface:
+  // false keeps the tap from launching the app; cancelNotification:
+  // true removes it. The payload set in _scheduleEdge (not this action
+  // itself) is what lets handleAlarmAction also cancel it explicitly as
+  // a fallback — see that function's doc for why that fallback exists.
   static const _dismissOnlyAction = <AndroidNotificationAction>[
     AndroidNotificationAction(
       'dismiss',
@@ -210,28 +210,28 @@ class NotificationService {
 
   Future<void>? _initFuture;
 
-  /// Startup entry point (call from main). Does NOT do the work itself —
-  /// queues it for right after the first frame paints
-  /// (addPostFrameCallback), because tz_data.initializeTimeZones() is
-  /// pure synchronous CPU work with no internal await points: calling
-  /// it from an "unawaited" async function does not help, since it
-  /// still runs to completion before that function's first real await.
-  /// Without this deferral it blocks the UI thread during the very
-  /// first frames, which is what was causing the multi-second/skipped-
-  /// frame startup freeze.
-  ///
-  /// Note this returns immediately — it does NOT mean setup has
-  /// finished. Anything that needs the plugin/timezone ready must
-  /// await [ensureInitialized] instead.
+  // Startup entry point (call from main). Does NOT do the work itself —
+  // queues it for right after the first frame paints
+  // (addPostFrameCallback), because tz_data.initializeTimeZones() is
+  // pure synchronous CPU work with no internal await points: calling
+  // it from an "unawaited" async function does not help, since it
+  // still runs to completion before that function's first real await.
+  // Without this deferral it blocks the UI thread during the very
+  // first frames, which is what was causing the multi-second/skipped-
+  // frame startup freeze.
+  //
+  // Note this returns immediately — it does NOT mean setup has
+  // finished. Anything that needs the plugin/timezone ready must
+  // await [ensureInitialized] instead.
   Future<void> init() async {
     if (_initFuture != null) return;
     WidgetsBinding.instance.addPostFrameCallback((_) => ensureInitialized());
   }
 
-  /// Resolves once setup has actually completed. Safe to call any number
-  /// of times, from anywhere, before or after [init]'s deferred callback
-  /// fires — the work runs exactly once and every caller shares the same
-  /// future. A failed attempt clears itself so a later call can retry.
+  // Resolves once setup has actually completed. Safe to call any number
+  // of times, from anywhere, before or after [init]'s deferred callback
+  // fires — the work runs exactly once and every caller shares the same
+  // future. A failed attempt clears itself so a later call can retry.
   Future<void> ensureInitialized() => _initFuture ??= _guardedInit();
 
   Future<void> _guardedInit() async {
@@ -285,13 +285,13 @@ class NotificationService {
     await AlarmSoundService.instance.load();
   }
 
-  /// Deterministic per-task, per-edge notification id, so scheduling the
-  /// same task twice (e.g. editing it) replaces rather than duplicates.
-  /// [_Edge.single] is exactly the id a plain task has always had, so
-  /// notifications scheduled before multi-day tasks existed still get
-  /// replaced/cancelled correctly. Start and end use negative ids (the
-  /// plugin accepts any 32-bit int), which can never collide with a
-  /// single id, and differ from each other for the same task.
+  // Deterministic per-task, per-edge notification id, so scheduling the
+  // same task twice (e.g. editing it) replaces rather than duplicates.
+  // [_Edge.single] is exactly the id a plain task has always had, so
+  // notifications scheduled before multi-day tasks existed still get
+  // replaced/cancelled correctly. Start and end use negative ids (the
+  // plugin accepts any 32-bit int), which can never collide with a
+  // single id, and differ from each other for the same task.
   int _notificationId(String taskId, _Edge edge) {
     final base = taskId.hashCode & 0x7fffffff;
     switch (edge) {
@@ -304,11 +304,11 @@ class NotificationService {
     }
   }
 
-  /// Alarm ids live in a disjoint range from [_notificationId]'s (top bit
-  /// forced on via the large odd XOR mask below is what keeps the two id
-  /// spaces from ever colliding for the same task), so the bell
-  /// reminder and the ringing alarm for the same task never fight over
-  /// one slot.
+  // Alarm ids live in a disjoint range from [_notificationId]'s (top bit
+  // forced on via the large odd XOR mask below is what keeps the two id
+  // spaces from ever colliding for the same task), so the bell
+  // reminder and the ringing alarm for the same task never fight over
+  // one slot.
   int _alarmId(String taskId, _Edge edge) {
     final base = (taskId.hashCode ^ 0x5a5a5a5a) & 0x3fffffff;
     final withRange = base | 0x40000000;
@@ -322,10 +322,10 @@ class NotificationService {
     }
   }
 
-  /// A task gets a separate "ending" reminder when it has an end that's
-  /// actually after its start. Deliberately not TodoTask.isMultiDay —
-  /// that only counts an end on a *later calendar day*, so a same-day
-  /// 9:00–17:00 task would silently lose its end reminder.
+  // A task gets a separate "ending" reminder when it has an end that's
+  // actually after its start. Deliberately not TodoTask.isMultiDay —
+  // that only counts an end on a *later calendar day*, so a same-day
+  // 9:00–17:00 task would silently lose its end reminder.
   bool _hasEnd(TodoTask task) {
     final start = task.dueDate;
     final end = task.endDate;
@@ -336,13 +336,13 @@ class NotificationService {
   // Notifications (quiet reminder, default channel)
   // ---------------------------------------------------------------------
 
-  /// Schedules (or reschedules) the reminder(s) for [task]. A simple task
-  /// gets one notification at dueDate; a task with an end gets
-  /// "— Starting" at dueDate and "— Ending" at endDate. Switching a task
-  /// between the two shapes always cancels the slots that no longer
-  /// apply, so no stale notification survives the change. A missing or
-  /// already-passed date cancels that slot rather than leaving an older
-  /// schedule in place — callers don't need to check either themselves.
+  // Schedules (or reschedules) the reminder(s) for [task]. A simple task
+  // gets one notification at dueDate; a task with an end gets
+  // "— Starting" at dueDate and "— Ending" at endDate. Switching a task
+  // between the two shapes always cancels the slots that no longer
+  // apply, so no stale notification survives the change. A missing or
+  // already-passed date cancels that slot rather than leaving an older
+  // schedule in place — callers don't need to check either themselves.
   Future<void> scheduleTaskNotification(
     TodoTask task, {
     NotificationStyle style = NotificationStyle.standard,
@@ -423,12 +423,12 @@ class NotificationService {
   // Alarms (loud, ringing, own channel/sound — the Alarm switch)
   // ---------------------------------------------------------------------
 
-  /// Android locks a notification channel's sound the moment the channel
-  /// is first created — recreating the channel with the same id but a
-  /// new sound is silently ignored by the OS. So each alarm-sound choice
-  /// gets its own channel id (derived from the sound's uri), and
-  /// switching sounds in Settings means switching channels, not mutating
-  /// one shared channel.
+  // Android locks a notification channel's sound the moment the channel
+  // is first created — recreating the channel with the same id but a
+  // new sound is silently ignored by the OS. So each alarm-sound choice
+  // gets its own channel id (derived from the sound's uri), and
+  // switching sounds in Settings means switching channels, not mutating
+  // one shared channel.
   String _alarmChannelId(String soundUri) =>
       'taskflow_alarm_channel_${soundUri.hashCode & 0x7fffffff}';
 
@@ -449,12 +449,12 @@ class NotificationService {
         ?.createNotificationChannel(channel);
   }
 
-  /// Schedules (or reschedules) the ringing alarm(s) for [task], mirroring
-  /// [scheduleTaskNotification]'s single-vs-start/end shape. Always reads
-  /// the *current* AlarmSoundService.instance.current at call time, so
-  /// editing a task after changing the sound in Settings picks up the
-  /// new sound automatically — nothing needs to re-schedule proactively
-  /// when the sound changes.
+  // Schedules (or reschedules) the ringing alarm(s) for [task], mirroring
+  // [scheduleTaskNotification]'s single-vs-start/end shape. Always reads
+  // the *current* AlarmSoundService.instance.current at call time, so
+  // editing a task after changing the sound in Settings picks up the
+  // new sound automatically — nothing needs to re-schedule proactively
+  // when the sound changes.
   Future<void> scheduleTaskAlarm(TodoTask task) async {
     if (!await PermissionService.requestNotificationPermission()) return;
     await ensureInitialized();
@@ -547,16 +547,16 @@ class NotificationService {
     await _cancelAlarmEdge(taskId, _Edge.end);
   }
 
-  /// Re-schedules every pending task alarm using whatever sound is
-  /// currently chosen in AlarmSoundService. Necessary because a
-  /// notification channel's sound is locked in at creation — simply
-  /// updating AlarmSoundService.instance.current does NOT retroactively
-  /// change the channel an already-scheduled alarm is tied to, so it
-  /// would otherwise keep ringing (or staying silent) on whatever sound
-  /// was current when it was first scheduled. Call this right after the
-  /// chosen sound changes (see AlarmSoundCard's upload/pick/reset
-  /// handlers) so every in-flight alarm actually moves onto the new
-  /// channel instead of silently staying on the old one.
+  // Re-schedules every pending task alarm using whatever sound is
+  // currently chosen in AlarmSoundService. Necessary because a
+  // notification channel's sound is locked in at creation — simply
+  // updating AlarmSoundService.instance.current does NOT retroactively
+  // change the channel an already-scheduled alarm is tied to, so it
+  // would otherwise keep ringing (or staying silent) on whatever sound
+  // was current when it was first scheduled. Call this right after the
+  // chosen sound changes (see AlarmSoundCard's upload/pick/reset
+  // handlers) so every in-flight alarm actually moves onto the new
+  // channel instead of silently staying on the old one.
   Future<void> rescheduleAllAlarms() async {
     await ensureInitialized();
     final bundles = await AppDatabase.instance.getAllTodosWithSubtasks();
@@ -576,9 +576,9 @@ class NotificationService {
 
   static const _testNotificationId = 0x7ffffff0;
 
-  /// Debug helper: one-off notification [seconds] from now, through the
-  /// same permission/channel/timezone/exact-alarm path a real task
-  /// reminder uses, without creating a task and waiting for a due time.
+  // Debug helper: one-off notification [seconds] from now, through the
+  // same permission/channel/timezone/exact-alarm path a real task
+  // reminder uses, without creating a task and waiting for a due time.
   Future<void> scheduleTestNotification({int seconds = 10}) async {
     if (!await PermissionService.requestNotificationPermission()) return;
     await ensureInitialized();
@@ -596,10 +596,10 @@ class NotificationService {
     );
   }
 
-  /// Debug helper: schedules a throwaway multi-day task through the real
-  /// scheduleTaskNotification path — a "Starting" notification 15s from
-  /// now and an "Ending" one 45s from now — to verify both edges fire
-  /// with distinct ids/titles. Not persisted anywhere.
+  // Debug helper: schedules a throwaway multi-day task through the real
+  // scheduleTaskNotification path — a "Starting" notification 15s from
+  // now and an "Ending" one 45s from now — to verify both edges fire
+  // with distinct ids/titles. Not persisted anywhere.
   Future<void> scheduleTestRangedNotifications() async {
     final now = DateTime.now();
     final task = TodoTask(
@@ -614,9 +614,9 @@ class NotificationService {
     await scheduleTaskNotification(task);
   }
 
-  /// Debug helper: one-off ringing alarm [seconds] from now, using
-  /// whatever sound is currently chosen in Settings, through the real
-  /// scheduleTaskAlarm path.
+  // Debug helper: one-off ringing alarm [seconds] from now, using
+  // whatever sound is currently chosen in Settings, through the real
+  // scheduleTaskAlarm path.
   Future<void> scheduleTestAlarm({int seconds = 10}) async {
     final now = DateTime.now();
     final task = TodoTask(
@@ -632,9 +632,9 @@ class NotificationService {
 
   String _bodyFor(TodoTask task) => '${task.category} · ${task.priority.label}';
 
-  /// Only one style today; future styles (big text, big picture, custom
-  /// layout via a plugin's platform-channel data, etc.) each add a case
-  /// here without touching anything that calls this service.
+  // Only one style today; future styles (big text, big picture, custom
+  // layout via a plugin's platform-channel data, etc.) each add a case
+  // here without touching anything that calls this service.
   AndroidNotificationDetails _androidDetailsFor(NotificationStyle style) {
     switch (style) {
       case NotificationStyle.standard:
@@ -650,25 +650,25 @@ class NotificationService {
   }
 }
 
-/// Handles a tap on the Snooze/Dismiss buttons for either the quiet
-/// Notification or the ringing Alarm.
-///
-/// Must be top-level (not a method) and marked @pragma('vm:entry-point')
-/// because Android can invoke this in a fresh background isolate — with
-/// none of this app's normal state — when the person taps an action
-/// while the app is backgrounded or fully killed. NotificationService.
-/// instance, AlarmSoundService, AppDatabase: none of that exists in that
-/// isolate. So this touches nothing but the plugin itself and whatever
-/// [response.payload] carries (set when the notification/alarm was first
-/// scheduled — see _scheduleEdge and _scheduleAutoRepeatBatch), which is
-/// enough to act correctly without needing to know anything about the
-/// task that created it.
-///
-/// Used for both onDidReceiveNotificationResponse (foreground/same-
-/// isolate) and onDidReceiveBackgroundNotificationResponse (background
-/// isolate) — being payload-only rather than instance-based means the
-/// exact same function is correct for either case, so there's only one
-/// implementation to keep in sync.
+// Handles a tap on the Snooze/Dismiss buttons for either the quiet
+// Notification or the ringing Alarm.
+//
+// Must be top-level (not a method) and marked @pragma('vm:entry-point')
+// because Android can invoke this in a fresh background isolate — with
+// none of this app's normal state — when the person taps an action
+// while the app is backgrounded or fully killed. NotificationService.
+// instance, AlarmSoundService, AppDatabase: none of that exists in that
+// isolate. So this touches nothing but the plugin itself and whatever
+// [response.payload] carries (set when the notification/alarm was first
+// scheduled — see _scheduleEdge and _scheduleAutoRepeatBatch), which is
+// enough to act correctly without needing to know anything about the
+// task that created it.
+//
+// Used for both onDidReceiveNotificationResponse (foreground/same-
+// isolate) and onDidReceiveBackgroundNotificationResponse (background
+// isolate) — being payload-only rather than instance-based means the
+// exact same function is correct for either case, so there's only one
+// implementation to keep in sync.
 @pragma('vm:entry-point')
 Future<void> handleAlarmAction(NotificationResponse response) async {
   final actionId = response.actionId;

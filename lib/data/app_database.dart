@@ -64,12 +64,12 @@ part 'app_database.g.dart';
 class AppDatabase extends _$AppDatabase {
   AppDatabase._() : super(_openConnection());
 
-  /// Constructor for tests — pass an in-memory executor
-  /// (e.g. `NativeDatabase.memory()`) instead of touching disk.
+  // Constructor for tests — pass an in-memory executor
+  // (e.g. `NativeDatabase.memory()`) instead of touching disk.
   AppDatabase.withExecutor(super.executor);
 
-  /// App-wide singleton, matching ExtensionManager.instance elsewhere in
-  /// this codebase — one open database connection for the app's lifetime.
+  // App-wide singleton, matching ExtensionManager.instance elsewhere in
+  // this codebase — one open database connection for the app's lifetime.
   static final AppDatabase instance = AppDatabase._();
 
   // Version history:
@@ -125,8 +125,8 @@ class AppDatabase extends _$AppDatabase {
     },
   );
 
-  /// Adds [column] to [table] unless the table already has a column of
-  /// that name.
+  // Adds [column] to [table] unless the table already has a column of
+  // that name.
   Future<void> _addColumnIfMissing(
     Migrator m,
     TableInfo<Table, dynamic> table,

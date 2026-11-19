@@ -10,13 +10,13 @@ import '../widgets/app_snackbar.dart';
 import '../widgets/slide_page_route.dart';
 import 'extension_runner_screen.dart';
 
-/// Extensions page — installable modules. Tapping "Add Extension" opens
-/// the system file picker so the user can select a .zip they downloaded
-/// (e.g. into their Downloads folder); the zip's own manifest.json
-/// determines which extension actually installs. There is no built-in
-/// catalog of "known" extensions — anything with a valid manifest can
-/// be installed, so the list here only ever reflects what's actually on
-/// the device.
+// Extensions page — installable modules. Tapping "Add Extension" opens
+// the system file picker so the user can select a .zip they downloaded
+// (e.g. into their Downloads folder); the zip's own manifest.json
+// determines which extension actually installs. There is no built-in
+// catalog of "known" extensions — anything with a valid manifest can
+// be installed, so the list here only ever reflects what's actually on
+// the device.
 class ExtensionsScreen extends StatefulWidget {
   const ExtensionsScreen({
     super.key,
@@ -24,16 +24,16 @@ class ExtensionsScreen extends StatefulWidget {
     this.onOpenExtension,
   });
 
-  /// True when pushed as its own route (e.g. from ContactsScreen's "Go to
-  /// Extensions" button) — adds a back-button AppBar. False when embedded
-  /// as a tab inside MainShell, which already provides the AppBar/back nav.
+  // True when pushed as its own route (e.g. from ContactsScreen's "Go to
+  // Extensions" button) — adds a back-button AppBar. False when embedded
+  // as a tab inside MainShell, which already provides the AppBar/back nav.
   final bool standalone;
 
-  /// Opens the generic extension-runner shell tab for a tapped card —
-  /// only available when embedded in MainShell (passed from there), so
-  /// the bottom nav stays visible. Null when standalone, since there's
-  /// no shell to switch tabs in from a route pushed on top of it; that
-  /// case falls back to pushing ExtensionRunnerScreen directly instead.
+  // Opens the generic extension-runner shell tab for a tapped card —
+  // only available when embedded in MainShell (passed from there), so
+  // the bottom nav stays visible. Null when standalone, since there's
+  // no shell to switch tabs in from a route pushed on top of it; that
+  // case falls back to pushing ExtensionRunnerScreen directly instead.
   final void Function(String extensionType, String title)? onOpenExtension;
 
   @override
@@ -142,10 +142,10 @@ class _ExtensionsScreenState extends State<ExtensionsScreen> {
     }
   }
 
-  /// Opens an installed extension. Goes through the shell's tab switch
-  /// when embedded (bottom nav stays visible); falls back to a plain
-  /// push when standalone, since there's no shell tab to switch to from
-  /// a route sitting on top of MainShell.
+  // Opens an installed extension. Goes through the shell's tab switch
+  // when embedded (bottom nav stays visible); falls back to a plain
+  // push when standalone, since there's no shell tab to switch to from
+  // a route sitting on top of MainShell.
   void _openExtension(InstalledExtension extension) {
     final type = extension.manifest.type;
     final title = extension.manifest.name;

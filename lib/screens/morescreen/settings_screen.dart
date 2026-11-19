@@ -7,8 +7,8 @@ import '../../theme/app_palette.dart';
 import '../../theme/app_tokens.dart';
 import '../../theme/app_typography.dart';
 
-/// Settings page — Permissions, Alarm, and Developer Mode, structured as
-/// a section list so more preferences can be added the same way later.
+// Settings page — Permissions, Alarm, and Developer Mode, structured as
+// a section list so more preferences can be added the same way later.
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 

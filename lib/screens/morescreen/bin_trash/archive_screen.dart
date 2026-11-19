@@ -7,8 +7,8 @@ import 'package:taskflow/theme/app_tokens.dart';
 import 'package:taskflow/theme/app_typography.dart';
 import 'bin_task_tile.dart';
 
-/// Archived tasks: finished-and-tucked-away, or archived by hand. Nothing
-/// here is ever deleted automatically.
+// Archived tasks: finished-and-tucked-away, or archived by hand. Nothing
+// here is ever deleted automatically.
 class ArchiveScreen extends StatefulWidget {
   const ArchiveScreen({super.key});
 

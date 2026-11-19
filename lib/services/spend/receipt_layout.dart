@@ -10,7 +10,7 @@
 // Pure Dart, no plugin, so it can be tested on its own.
 import 'capture_payment_pattern.dart';
 
-/// One recognised word and where it sits on the image.
+// One recognised word and where it sits on the image.
 class PositionedWord {
   const PositionedWord(
     this.text, {
@@ -29,7 +29,7 @@ class PositionedWord {
   double get height => bottom - top;
 }
 
-/// One visual row of the receipt.
+// One visual row of the receipt.
 class ReceiptRow {
   const ReceiptRow({
     required this.text,
@@ -54,8 +54,8 @@ class _RowBuilder {
   double bottom;
   final List<PositionedWord> words;
 
-  /// Same row when the vertical overlap is more than half of the smaller
-  /// of the two heights — so a small label beside a big amount still joins.
+  // Same row when the vertical overlap is more than half of the smaller
+  // of the two heights — so a small label beside a big amount still joins.
   bool accepts(PositionedWord w) {
     final overlap =
         (w.bottom < bottom ? w.bottom : bottom) - (w.top > top ? w.top : top);
@@ -71,7 +71,7 @@ class _RowBuilder {
   }
 }
 
-/// Rebuilds rows (top to bottom) from loose words (any order).
+// Rebuilds rows (top to bottom) from loose words (any order).
 List<ReceiptRow> groupWordsIntoRows(List<PositionedWord> words) {
   final usable =
       words.where((w) => w.text.trim().isNotEmpty && w.height > 0).toList()
@@ -101,8 +101,8 @@ List<ReceiptRow> groupWordsIntoRows(List<PositionedWord> words) {
   return rows;
 }
 
-/// Rows for plain text with no positions (text shared as text, tests):
-/// each line becomes one evenly spaced row.
+// Rows for plain text with no positions (text shared as text, tests):
+// each line becomes one evenly spaced row.
 List<ReceiptRow> rowsFromPlainText(String text) {
   final lines = text
       .replaceAll('\r', '')
@@ -116,9 +116,9 @@ List<ReceiptRow> rowsFromPlainText(String text) {
   ];
 }
 
-/// Which third each row is in (parallel to [rows]). The thirds are of
-/// the height the text actually covers, not of the whole image, so empty
-/// space above or below the receipt doesn't skew them.
+// Which third each row is in (parallel to [rows]). The thirds are of
+// the height the text actually covers, not of the whole image, so empty
+// space above or below the receipt doesn't skew them.
 List<PaymentSection> sectionsFor(List<ReceiptRow> rows) {
   if (rows.isEmpty) return const [];
   var minTop = rows.first.top;
@@ -142,7 +142,7 @@ List<PaymentSection> sectionsFor(List<ReceiptRow> rows) {
   ];
 }
 
-/// Rows plus their sections, with the lookups the parser needs.
+// Rows plus their sections, with the lookups the parser needs.
 class ReceiptDoc {
   ReceiptDoc(List<ReceiptRow> rows)
     : rows = List.unmodifiable(rows),
@@ -153,9 +153,9 @@ class ReceiptDoc {
 
   String get fullText => rows.map((r) => r.text).join('\n');
 
-  /// Row indexes in the order a rule should search them: its preferred
-  /// section first, then the rest. A match anywhere still counts —
-  /// layouts differ between app versions.
+  // Row indexes in the order a rule should search them: its preferred
+  // section first, then the rest. A match anywhere still counts —
+  // layouts differ between app versions.
   List<int> searchOrder(PaymentSection prefer) {
     final order = <PaymentSection>[
       prefer,
@@ -168,8 +168,8 @@ class ReceiptDoc {
     ];
   }
 
-  /// One row per line, tagged H / D / F — what "Show what was read"
-  /// displays, so a receipt that misses can be matched to a rule.
+  // One row per line, tagged H / D / F — what "Show what was read"
+  // displays, so a receipt that misses can be matched to a rule.
   String debugDump() => [
     for (var i = 0; i < rows.length; i++)
       '${_tag(sections[i])} | ${rows[i].text}',

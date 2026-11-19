@@ -12,14 +12,14 @@ import '../screens/todoscreen/todo_task_sheet.dart';
 
 DateTime _dateOnly(DateTime d) => DateTime(d.year, d.month, d.day);
 
-/// Calendar tab — monthly grid with due-date markers pulled from real
-/// tasks, plus an agenda list for whichever day is selected. Tapping a
-/// day both shows its tasks here and offers a "View in TODO" jump that
-/// switches to the TODO tab pre-filtered to that date.
+// Calendar tab — monthly grid with due-date markers pulled from real
+// tasks, plus an agenda list for whichever day is selected. Tapping a
+// day both shows its tasks here and offers a "View in TODO" jump that
+// switches to the TODO tab pre-filtered to that date.
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key, required this.onViewDateInTodo});
 
-  /// Switches MainShell to the TODO tab, filtered to the given date.
+  // Switches MainShell to the TODO tab, filtered to the given date.
   final ValueChanged<DateTime> onViewDateInTodo;
 
   @override
@@ -87,10 +87,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
     );
   }
 
-  /// Opens the same "New task" sheet TodoScreen uses, pre-filled to the
-  /// selected day, and persists it the same way — so the task shows up
-  /// in TODO immediately, and here too via TodoRefreshBus (which this
-  /// screen already listens to in _loadEvents above).
+  // Opens the same "New task" sheet TodoScreen uses, pre-filled to the
+  // selected day, and persists it the same way — so the task shows up
+  // in TODO immediately, and here too via TodoRefreshBus (which this
+  // screen already listens to in _loadEvents above).
   void _addTaskForSelectedDate() {
     showTodoTaskSheet(
       context,

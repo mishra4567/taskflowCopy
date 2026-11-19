@@ -1,6 +1,5 @@
 // services/backup_service
 import 'dart:convert';
-import 'dart:typed_data';
 
 import 'package:archive/archive.dart';
 import 'package:drift/drift.dart' show Value;
@@ -15,7 +14,7 @@ import 'package:taskflow/services/notification_service.dart';
 import 'restore_extension_records.dart';
 import 'package:taskflow/services/todo_refresh_bus.dart';
 
-/// Thrown with a message that is safe to show the person as-is.
+// Thrown with a message that is safe to show the person as-is.
 class BackupException implements Exception {
   BackupException(this.message);
   final String message;
@@ -24,7 +23,7 @@ class BackupException implements Exception {
   String toString() => message;
 }
 
-/// What a restore actually did, for the "Restored ..." message.
+// What a restore actually did, for the "Restored ..." message.
 class RestoreResult {
   const RestoreResult({
     required this.tasks,
@@ -40,11 +39,11 @@ class RestoreResult {
   final int contacts;
   final int otherItems;
 
-  /// Payments added from the file (SPEND).
+  // Payments added from the file (SPEND).
   final int expenses;
 
-  /// Entries in the file that couldn't be used (missing id/title, a
-  /// subtask whose task isn't in the file, ...).
+  // Entries in the file that couldn't be used (missing id/title, a
+  // subtask whose task isn't in the file, ...).
   final int skipped;
 
   String get summary {
@@ -64,32 +63,32 @@ class RestoreResult {
   }
 }
 
-/// Backs up and restores tasks (with subtasks), contacts and payments,
-/// plus any other extension records, as one .zip holding
-/// taskflow_backup.json.
-///
-/// Works on bytes only — [createBackup] returns the zip's bytes and
-/// [restore] takes them — so it doesn't care how the file gets saved,
-/// shared or picked; keep using whatever the Settings backup card
-/// already does for that part.
-///
-/// File format (backupFormatVersion 3; versions 1 and 2 still restore):
-/// {
-///   "app": "taskflow", "backupFormatVersion": 3, "exportedAt": ISO-8601,
-///   "todos":    [ {id,title,category,priority,dueDate,endDate,isDone,
-///                  notificationEnabled,alarmEnabled} ],   // dates = ms
-///   "subtasks": [ {todoId,title,isDone} ],
-///   "contacts": [ {firstName,secondName,number,createdAt} ],
-///   "expenses": [ {amountPaise,paidAt,payee,category,note,method,upiRef,
-///                  source,direction,createdAt} ],          // no ids
-///   "extensionRecords": [ {extensionType,payload} ]       // not contacts
-/// }
-///
-/// Restore MERGES into what's on the phone: a task in the file replaces
-/// the task with the same id, a payment already on the phone is never
-/// overwritten or duplicated, and everything else already on the phone is
-/// left alone. The database part is one transaction, so a failure
-/// part-way changes nothing.
+// Backs up and restores tasks (with subtasks), contacts and payments,
+// plus any other extension records, as one .zip holding
+// taskflow_backup.json.
+//
+// Works on bytes only — [createBackup] returns the zip's bytes and
+// [restore] takes them — so it doesn't care how the file gets saved,
+// shared or picked; keep using whatever the Settings backup card
+// already does for that part.
+//
+// File format (backupFormatVersion 3; versions 1 and 2 still restore):
+// {
+//   "app": "taskflow", "backupFormatVersion": 3, "exportedAt": ISO-8601,
+//   "todos":    [ {id,title,category,priority,dueDate,endDate,isDone,
+//                  notificationEnabled,alarmEnabled} ],   // dates = ms
+//   "subtasks": [ {todoId,title,isDone} ],
+//   "contacts": [ {firstName,secondName,number,createdAt} ],
+//   "expenses": [ {amountPaise,paidAt,payee,category,note,method,upiRef,
+//                  source,direction,createdAt} ],          // no ids
+//   "extensionRecords": [ {extensionType,payload} ]       // not contacts
+// }
+//
+// Restore MERGES into what's on the phone: a task in the file replaces
+// the task with the same id, a payment already on the phone is never
+// overwritten or duplicated, and everything else already on the phone is
+// left alone. The database part is one transaction, so a failure
+// part-way changes nothing.
 class BackupService {
   BackupService._();
 
@@ -153,13 +152,13 @@ class BackupService {
       ..addFile(ArchiveFile(_jsonName, jsonBytes.length, jsonBytes));
     final encoded = ZipEncoder().encode(archive);
     // ignore: unnecessary_null_comparison
-    if (encoded == null) throw BackupException("Couldn't create the zip.");
+    // if (encoded == null) throw BackupException("Couldn't create the zip.");
     return Uint8List.fromList(encoded);
   }
 
   // --------------------------------------------------------------- restore
 
-  /// [bytes] is the picked file: the .zip, or a bare .json.
+  // [bytes] is the picked file: the .zip, or a bare .json.
   static Future<RestoreResult> restore(Uint8List bytes) async {
     final data = _decode(bytes);
 
@@ -280,9 +279,9 @@ class BackupService {
 
   // ------------------------------------------------ save & pick (the UI)
 
-  /// "Back up now": builds the backup and asks where to save it. Returns
-  /// the saved location to show the person, or null if they cancelled
-  /// the save dialog.
+  // "Back up now": builds the backup and asks where to save it. Returns
+  // the saved location to show the person, or null if they cancelled
+  // the save dialog.
   static Future<String?> exportToZip() async {
     final bytes = await createBackup();
     final saved = await FilePicker.saveFile(
@@ -293,9 +292,9 @@ class BackupService {
     return _asLocation(saved);
   }
 
-  /// "Restore": asks for a backup file (.zip, or a bare .json) and
-  /// restores it. Returns null if they cancelled the picker; throws
-  /// [BackupException] (message safe to show) if the file can't be used.
+  // "Restore": asks for a backup file (.zip, or a bare .json) and
+  // restores it. Returns null if they cancelled the picker; throws
+  // [BackupException] (message safe to show) if the file can't be used.
   static Future<RestoreResult?> pickAndRestore() async {
     final file = await FilePicker.pickFile();
     if (file == null) return null;
@@ -309,8 +308,8 @@ class BackupService {
     return restore(bytes);
   }
 
-  /// saveFile has returned both a path String and a Uri across
-  /// file_picker versions; either becomes something displayable.
+  // saveFile has returned both a path String and a Uri across
+  // file_picker versions; either becomes something displayable.
   static String? _asLocation(Object? saved) {
     if (saved == null) return null;
     if (saved is Uri) {

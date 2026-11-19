@@ -10,7 +10,7 @@ import 'package:taskflow/services/archive_trash_service.dart'; // ARCHIVE
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(const TaskFlowApp());
-    // Both of these read from disk/do setup work, but nothing on the first
+  // Both of these read from disk/do setup work, but nothing on the first
   // frame depends on them finishing first — DevModeService's `enabled`
   // and NotificationService's setup both update reactively once ready,
   // the same way themeController already does. Deferring them here keeps

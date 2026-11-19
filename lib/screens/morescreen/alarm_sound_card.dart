@@ -6,11 +6,11 @@ import '../../theme/app_palette.dart';
 import '../../theme/app_tokens.dart';
 import '../../theme/app_typography.dart';
 
-/// Settings card for the alarm ringtone — shows the current choice
-/// (default, or an uploaded/built-in/system file's name), lets the user
-/// preview it, upload a new one, or reset to the phone's default alarm
-/// sound. Mirrors PermissionsCard's layout so Settings reads as one
-/// consistent list rather than a one-off design.
+// Settings card for the alarm ringtone — shows the current choice
+// (default, or an uploaded/built-in/system file's name), lets the user
+// preview it, upload a new one, or reset to the phone's default alarm
+// sound. Mirrors PermissionsCard's layout so Settings reads as one
+// consistent list rather than a one-off design.
 class AlarmSoundCard extends StatefulWidget {
   const AlarmSoundCard({super.key});
 
@@ -235,9 +235,9 @@ class _AlarmSoundCardState extends State<AlarmSoundCard> {
   }
 }
 
-/// Selectable chip for one built-in sound — same selected/unselected
-/// treatment as _FilterChip in todo_screen.dart, so this reads as the
-/// same control language elsewhere in the app rather than a one-off.
+// Selectable chip for one built-in sound — same selected/unselected
+// treatment as _FilterChip in todo_screen.dart, so this reads as the
+// same control language elsewhere in the app rather than a one-off.
 class _BuiltInChip extends StatelessWidget {
   const _BuiltInChip({
     required this.label,

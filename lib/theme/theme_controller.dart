@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-/// App-wide theme mode controller. No state-management package yet, so this
-/// is a plain ValueNotifier the app listens to at the root.
+// App-wide theme mode controller. No state-management package yet, so this
+// is a plain ValueNotifier the app listens to at the root.
 class ThemeController extends ValueNotifier<ThemeMode> {
   ThemeController(super.value);
 
@@ -14,5 +14,5 @@ class ThemeController extends ValueNotifier<ThemeMode> {
   };
 }
 
-/// Single shared instance for the whole app.
+// Single shared instance for the whole app.
 final themeController = ThemeController(ThemeMode.dark);

@@ -13,7 +13,7 @@ import 'package:taskflow/screens/morescreen/backup_screen.dart'; // BACKUP
 import 'package:taskflow/screens/morescreen/settings_screen.dart'; // ← adjust if settings_screen.dart lives elsewhere
 import 'package:taskflow/screens/morescreen/bin_trash/trash_screen.dart'; // ARCHIVE
 
-/// More page — Archive, Trash, Backup, Settings, Theme, Account.
+// More page — Archive, Trash, Backup, Settings, Theme, Account.
 class MoreScreen extends StatelessWidget {
   const MoreScreen({super.key});
 
