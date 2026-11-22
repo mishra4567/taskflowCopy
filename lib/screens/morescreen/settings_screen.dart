@@ -1,5 +1,6 @@
 // lib/screens/morescreen/settings_screen.dart
 import 'package:flutter/material.dart';
+import 'package:taskflow/services/encryption/encryption_settings_card.dart';
 import 'permissions_card.dart';
 import 'alarm_sound_card.dart';
 import '../../services/dev_mode_service.dart';
@@ -33,6 +34,8 @@ class SettingsScreen extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.sm),
           const PermissionsCard(),
+          const SizedBox(height: AppSpacing.lg),
+          const EncryptionSettingsCard(),
           const SizedBox(height: AppSpacing.lg),
           Text(
             'ALARM',

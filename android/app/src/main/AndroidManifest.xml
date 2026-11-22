@@ -15,6 +15,9 @@
     <uses-permission android:name="android.permission.USE_EXACT_ALARM"/>
     <!-- So a scheduled notification still fires after the device reboots. -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-feature android:name="android.hardware.camera" android:required="false"/>
     <application
         android:label="taskflow"
         android:name="${applicationName}"

@@ -1,0 +1,5 @@
+Call	Auth	Request	Response
+POST /api/pairing-sessions	none	{deviceName, platform, publicKey}	201 {sessionId, pollSecret, expiresAt}
+GET /api/pairing-sessions/{id}/lookup	Bearer		{deviceName, platform}
+POST /api/pairing-sessions/{id}/approve	Bearer	{approverPublicKey?, encryptedMasterKey?}	204. Both fields are null when the approving phone has no encryption.
+GET /api/pairing-sessions/{id} + header X-Poll-Secret	none		202 pending, or 200 {approverPublicKey?, encryptedMasterKey?, deviceToken, deviceId} once, or 410 expired
