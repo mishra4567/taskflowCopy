@@ -1,5 +1,6 @@
 // screens/morescreen/more_screen.dart
 import 'package:flutter/material.dart';
+import 'package:taskflow/screens/devices/devices_card.dart';
 import 'package:taskflow/services/archive_trash_service.dart'; // ARCHIVE
 import 'package:taskflow/services/todo_refresh_bus.dart'; // ARCHIVE
 import 'package:taskflow/theme/app_palette.dart';
@@ -78,6 +79,13 @@ class MoreScreen extends StatelessWidget {
             );
           },
         ),
+        const SizedBox(height: AppSpacing.lg),
+        Text(
+          'DEVICES',
+          style: AppTypography.labelCaps.copyWith(color: colors.textSecondary),
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        const DevicesCard(), 
         const SizedBox(height: AppSpacing.lg),
         Text(
           'ACCOUNT',

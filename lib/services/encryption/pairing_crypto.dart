@@ -5,13 +5,13 @@ import 'package:cryptography/cryptography.dart';
 
 import 'aes_box.dart';
 
-/// A throwaway key pair for one pairing session. Never stored; if the app
-/// is killed mid-pairing the session is simply restarted.
+// A throwaway key pair for one pairing session. Never stored; if the app
+// is killed mid-pairing the session is simply restarted.
 class PairingKeyPair {
   const PairingKeyPair(this.keyPair, this.publicKey);
   final SimpleKeyPair keyPair;
 
-  /// base64url, no padding — safe inside a QR link.
+  // base64url, no padding — safe inside a QR link.
   final String publicKey;
 }
 
@@ -24,7 +24,7 @@ class ApprovalPayload {
   final String encryptedMasterKey;
 }
 
-/// What the QR carries: the session id and the new device's public key.
+// What the QR carries: the session id and the new device's public key.
 class PairingQr {
   const PairingQr({required this.sessionId, required this.publicKey});
   final String sessionId;
@@ -36,7 +36,7 @@ class PairingQr {
     queryParameters: {'v': '1', 's': sessionId, 'k': publicKey},
   ).toString();
 
-  /// Null for anything that isn't a valid TaskFlow pairing link.
+  // Null for anything that isn't a valid TaskFlow pairing link.
   static PairingQr? parse(String text) {
     final uri = Uri.tryParse(text);
     if (uri == null || uri.scheme != 'taskflow' || uri.host != 'pair') {
@@ -92,9 +92,9 @@ class PairingCrypto {
     );
   }
 
-  /// On phone A (already linked and unlocked): encrypt the master key for
-  /// the new phone. [newDevicePublicKey] MUST come from the scanned QR,
-  /// never from the server.
+  // On phone A (already linked and unlocked): encrypt the master key for
+  // the new phone. [newDevicePublicKey] MUST come from the scanned QR,
+  // never from the server.
   static Future<ApprovalPayload> encryptMasterKeyFor({
     required String newDevicePublicKey,
     required String sessionId,
@@ -113,8 +113,8 @@ class PairingCrypto {
     );
   }
 
-  /// On the new phone B: recover the master key. Throws
-  /// [DecryptionFailedException] if anything was tampered with or swapped.
+  // On the new phone B: recover the master key. Throws
+  // [DecryptionFailedException] if anything was tampered with or swapped.
   static Future<SecretKey> decryptMasterKey({
     required PairingKeyPair myKeyPair,
     required String approverPublicKey,

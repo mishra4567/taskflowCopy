@@ -3,8 +3,8 @@ import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'master_key_service.dart';
 
-/// Wraps waiting to be uploaded. Offline-first: setup succeeds locally, and
-/// the upload happens whenever the person signs in. Clear after a 2xx.
+// Wraps waiting to be uploaded. Offline-first: setup succeeds locally, and
+// the upload happens whenever the person signs in. Clear after a 2xx.
 class KeyWrapStore {
   KeyWrapStore._();
   static const _storage = FlutterSecureStorage();
