@@ -1,10 +1,10 @@
 // screens/devices/link_this_phone_screen
 import 'dart:async';
-import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
+import '../../config/device_info.dart';
 import '../../services/pairing/pairing_service.dart';
 import '../../theme/app_palette.dart';
 import '../../theme/app_tokens.dart';
@@ -22,9 +22,7 @@ class LinkThisPhoneScreen extends StatefulWidget {
 class _LinkThisPhoneScreenState extends State<LinkThisPhoneScreen> {
   static const _pollEvery = Duration(seconds: 2);
 
-  final _nameController = TextEditingController(
-    text: Platform.isIOS ? 'iPhone' : 'Android phone',
-  );
+  final _nameController = TextEditingController();
   PairingAttempt? _attempt;
   Timer? _timer;
   bool _starting = false;
@@ -34,13 +32,29 @@ class _LinkThisPhoneScreenState extends State<LinkThisPhoneScreen> {
   Duration _remaining = Duration.zero;
 
   @override
+  void initState() {
+    super.initState();
+    _suggestName();
+  }
+
+  @override
   void dispose() {
     _timer?.cancel();
     _nameController.dispose();
     super.dispose();
   }
 
-  String get _platform => Platform.isIOS ? 'ios' : 'android';
+  // Pre-fills the name with what the phone calls itself ("samsung
+  // SM-S918B"), unless the person has already started typing one.
+  Future<void> _suggestName() async {
+    try {
+      final device = await DeviceInfoConfig.getDeviceInfo();
+      if (!mounted || _nameController.text.isNotEmpty) return;
+      _nameController.text = device.deviceName;
+    } catch (_) {
+      // No suggestion is fine — the person can type a name.
+    }
+  }
 
   Future<void> _start() async {
     final name = _nameController.text.trim();
@@ -53,9 +67,10 @@ class _LinkThisPhoneScreenState extends State<LinkThisPhoneScreen> {
       _error = null;
     });
     try {
+      // The platform isn't passed in: PairingService reads it from the
+      // device, the same source as everything else that reports it.
       final attempt = await PairingService.instance.startAsNewDevice(
         deviceName: name,
-        platform: _platform,
       );
       if (!mounted) return;
       setState(() {

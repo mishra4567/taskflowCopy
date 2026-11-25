@@ -13,6 +13,8 @@ import 'package:taskflow/screens/morescreen/bin_trash/archive_screen.dart'; // A
 import 'package:taskflow/screens/morescreen/backup_screen.dart'; // BACKUP
 import 'package:taskflow/screens/morescreen/settings_screen.dart'; // ← adjust if settings_screen.dart lives elsewhere
 import 'package:taskflow/screens/morescreen/bin_trash/trash_screen.dart'; // ARCHIVE
+import 'package:taskflow/screens/account/login_screen.dart';
+import 'package:taskflow/services/auth/account_service.dart';
 
 // More page — Archive, Trash, Backup, Settings, Theme, Account.
 class MoreScreen extends StatelessWidget {
@@ -85,47 +87,38 @@ class MoreScreen extends StatelessWidget {
           style: AppTypography.labelCaps.copyWith(color: colors.textSecondary),
         ),
         const SizedBox(height: AppSpacing.sm),
-        const DevicesCard(), 
+        const DevicesCard(),
         const SizedBox(height: AppSpacing.lg),
         Text(
           'ACCOUNT',
           style: AppTypography.labelCaps.copyWith(color: colors.textSecondary),
         ),
         const SizedBox(height: AppSpacing.sm),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.md),
-            child: Row(
-              children: [
-                CircleAvatar(
-                  radius: 22,
-                  backgroundColor: colors.surfaceContainerHigh,
-                  child: Icon(Icons.person, color: colors.onSurfaceVariant),
-                ),
-                const SizedBox(width: AppSpacing.md),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'John Doe',
-                        style: AppTypography.bodyMd.copyWith(
-                          color: colors.textPrimary,
-                        ),
-                      ),
-                      Text(
-                        'john.doe@example.com',
-                        style: AppTypography.bodySm.copyWith(
-                          color: colors.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Icon(Icons.chevron_right, color: colors.outline),
-              ],
-            ),
-          ),
+        AnimatedBuilder(
+          animation: AccountService.instance,
+          builder: (context, _) {
+            final account = AccountService.instance;
+            if (!account.isSignedIn) {
+              return ListTile(
+                leading: const Icon(Icons.person_outline),
+                title: const Text('Sign in'),
+                onTap: () {
+                  Navigator.of(
+                    context,
+                  ).push<bool>(slidePageRoute((_) => const LoginScreen()));
+                },
+              );
+            }
+            return ListTile(
+              leading: const Icon(Icons.person),
+              title: Text(account.name ?? ''),
+              subtitle: Text(account.email ?? ''),
+              trailing: TextButton(
+                onPressed: () => AccountService.instance.signOut(),
+                child: const Text('Sign out'),
+              ),
+            );
+          },
         ),
       ],
     );

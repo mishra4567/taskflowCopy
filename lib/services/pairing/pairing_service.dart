@@ -1,6 +1,7 @@
 // services/pairing/pairing_service
 import 'package:cryptography/cryptography.dart';
 
+import '../../config/device_info.dart';
 import '../api/api_client.dart';
 import '../api/device_session.dart';
 import '../encryption/aes_box.dart';
@@ -78,10 +79,13 @@ class PairingService {
 
   // Makes this phone's throwaway key pair, opens a session on the server
   // and returns what the QR screen needs.
-  Future<PairingAttempt> startAsNewDevice({
-    required String deviceName,
-    required String platform,
-  }) async {
+  //
+  // [deviceName] is what the person typed on the "Link this phone" screen
+  // ("Amma's phone"); left empty, the name comes from the device itself
+  // (manufacturer + model, via DeviceInfoConfig). The platform is always
+  // read from the device and never passed in, so it can't disagree with
+  // what DeviceInfoConfig reports everywhere else.
+  Future<PairingAttempt> startAsNewDevice({String? deviceName}) async {
     if (await DeviceSession.instance.isSignedIn) {
       throw const PairingException(
         'This phone is already linked to an account.',
@@ -97,10 +101,13 @@ class PairingService {
       );
     }
 
+    final device = await DeviceInfoConfig.getDeviceInfo();
+    final typedName = deviceName?.trim() ?? '';
+
     final keyPair = await PairingCrypto.newKeyPair();
     final session = await _api.createSession(
-      deviceName: deviceName,
-      platform: platform,
+      deviceName: typedName.isEmpty ? device.deviceName : typedName,
+      platform: device.platform,
       publicKey: keyPair.publicKey,
     );
     return PairingAttempt(
