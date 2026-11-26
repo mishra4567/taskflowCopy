@@ -80,8 +80,8 @@ class AccountService extends ChangeNotifier {
     required String email,
     required String password,
     required String passwordConfirmation,
-    required String deviceName,
-    required String platform,
+    String? deviceName,
+    String? platform,
   }) async {
      final device = await DeviceInfoConfig.getDeviceInfo();
     final result = await AuthApi.instance.register(
@@ -89,8 +89,7 @@ class AccountService extends ChangeNotifier {
       email: email,
       password: password,
       passwordConfirmation: passwordConfirmation,
-      deviceName: device.deviceName,
-      platform: device.platform,
+      device: device,
     );
     await _applySignedIn(result);
   }
@@ -105,8 +104,7 @@ class AccountService extends ChangeNotifier {
     final result = await AuthApi.instance.login(
       email: email,
       password: password,
-      deviceName: device.deviceName,
-      platform: device.platform,
+      device: device,
     );
     await _applySignedIn(result);
   }
