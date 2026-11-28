@@ -27,6 +27,14 @@ class Expenses extends Table {
 
   // 'paid' (money went out) or 'received' (money came in).
   TextColumn get direction => text().withDefault(const Constant('paid'))();
+  /// Same on every phone. A trigger fills it for new rows (nullable only
+  /// because SQLite can't add a NOT NULL column to existing rows).
+  TextColumn get uuid => text().nullable()();
+
+  /// Last change on any phone (unix seconds). A trigger keeps it current.
+  DateTimeColumn get updatedAt => dateTime().withDefault(
+    Constant(DateTime.fromMillisecondsSinceEpoch(0)),
+  )();
 
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 }

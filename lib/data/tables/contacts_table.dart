@@ -11,8 +11,12 @@ import 'package:drift/drift.dart';
 @DataClassName('SavedContact')
 class Contacts extends Table {
   IntColumn get id => integer().autoIncrement()();
+  TextColumn get uuid => text().nullable().unique()();
   TextColumn get firstName => text().withDefault(const Constant(''))();
   TextColumn get secondName => text().withDefault(const Constant(''))();
   TextColumn get number => text().withDefault(const Constant(''))();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+  DateTimeColumn get updatedAt => dateTime().withDefault(
+    Constant(DateTime.fromMillisecondsSinceEpoch(0)),
+  )();
 }

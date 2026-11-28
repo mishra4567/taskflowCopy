@@ -23,6 +23,7 @@ import 'quick_add/quick_add_sheet.dart';
 import 'quick_add/quick_add_fab.dart';
 import 'app_snackbar.dart';
 import 'slide_page_route.dart';
+import 'sync_snackbar.dart';
 
 // Bottom nav destinations. `extensions`, `todo`, `testing`, `contacts`,
 // and `extensionRunner` aren't bottom-nav icons (Calendar took one slot,
@@ -176,7 +177,12 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
         return;
 
       case TopBarMenuAction.sync:
-        showAppSnackBar(context, 'Syncing…');
+        runSyncWithSnackBar(
+          context,
+          onSignIn: () {
+            _selectPage(_NavPage.more);
+          },
+        );
     }
   }
 

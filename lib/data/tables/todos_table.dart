@@ -26,6 +26,10 @@ class Todos extends Table {
   DateTimeColumn get completedAt => dateTime().nullable()();
   DateTimeColumn get archivedAt => dateTime().nullable()();
   DateTimeColumn get deletedAt => dateTime().nullable()();
+  /// Last change on any phone (unix seconds). A trigger keeps it current.
+  DateTimeColumn get updatedAt => dateTime().withDefault(
+    Constant(DateTime.fromMillisecondsSinceEpoch(0)),
+  )();
 
   @override
   Set<Column> get primaryKey => {id};
